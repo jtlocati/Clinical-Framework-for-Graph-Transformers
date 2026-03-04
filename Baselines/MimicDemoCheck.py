@@ -1,6 +1,9 @@
 import pandas as pd
 from pathlib import Path
 
+#!!!!!!!!!TEMPORARY FILE!!!!!!!!!
+    #Used to find table structure of MIMIC_demo DS
+
 # YAIB MIMIC demo folder
 DATA_ROOT = Path(r"C:\Users\jetlo\OneDrive\Documents\GitHub\YAIB\demo_data\mortality24\mimic_demo")
 

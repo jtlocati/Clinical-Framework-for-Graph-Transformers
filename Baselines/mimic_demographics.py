@@ -24,7 +24,7 @@ new_table = table[["stay_id", "age", "sex", "label"]].copy()
 
 new_table["age_group"] = pandas.cut(new_table["age"], bins=[-numpy.inf, 40, 65, numpy.inf], labels=["<40", "40-65", "65+"],right=False)
 
-simple_label = {    "age_<40": (new_table["age_group"] == "<40"), "age_40_65": (new_table["age_group"] == "40-65"), "age_65plus": (new_table["age_group"] == "65+"), "sex_male": (new_table["sex"] == "Male"), "sex_female": (new_table["sex"] == "Female"),}
+simple_label = {"age_<40": (new_table["age_group"] == "<40"), "age_40_65": (new_table["age_group"] == "40-65"), "age_65plus": (new_table["age_group"] == "65+"), "sex_male": (new_table["sex"] == "Male"), "sex_female": (new_table["sex"] == "Female"),}
 
 #Distrobution table:\
 
