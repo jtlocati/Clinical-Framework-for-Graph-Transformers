@@ -1,11 +1,14 @@
 import pandas as pd
 from pathlib import Path
+import os
 
 #!!!!!!!!!TEMPORARY FILE!!!!!!!!!
     #Used to find table structure of MIMIC_demo DS
 
 # YAIB MIMIC demo folder
 DATA_ROOT = Path(r"C:\Users\jetlo\OneDrive\Documents\GitHub\YAIB\demo_data\mortality24\mimic_demo")
+
+#DATA_ROOT = Path(os.getenv("MIMIC_DEMO_PATH"))
 
 # Read tables
 sta = pd.read_parquet(DATA_ROOT / "sta.parquet")
