@@ -13,7 +13,7 @@ import numpy
 import pandas
 from google.cloud import bigquery 
 from sklearn.model_selection import train_test_split
-from Task4 import config
+import config
 
 #initalize big query:
 def get_client() -> bigquery.Client:
@@ -64,7 +64,7 @@ ORDER BY stay_id
 
 def extract_info() -> pandas.DataFrame:
     print("Exstracting MIMIC Data....")
-    return bigquery(COT_SQL)
+    return BigQuery(COT_SQL)
 
 #Bin Hourly Vitals (Step 2)
 
