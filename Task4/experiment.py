@@ -11,14 +11,15 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.optim import AdamW
-from torch.optim.lr_scheduler import CosineAnnealingLR
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score, average_precision_score
 import lightgbm as lgb
+import math
 
 import config
 from models import get_model, PretrainedTST, PretrainedTSTEncoder, PretrainedTSTForPretraining
 from dataset import  make_seq_loaders, make_flat_data
+from torch.optim.lr_scheduler import LambdaLR
 
 #metrics
 def compute_metrics(y_true: np.array, y_prob: np.ndarray) -> dict:
@@ -75,13 +76,20 @@ def train_lightgbm(flat_data: dict, seed: int) -> dict:
 
 
 #  Neural model training loop
+def _get_warmup_cosine_scheduler(optimizer, warmup_epochs, total_epochs):
+#Linear warmup for `warmup_epochs`, then cosine decay to 0.
+    def lr_lambda(epoch):
+        if epoch < warmup_epochs:
+            return (epoch + 1) / warmup_epochs          # linear 0→1
+        progress = (epoch - warmup_epochs) / max(total_epochs - warmup_epochs, 1)
+        return 0.5 * (1.0 + math.cos(math.pi * progress))   # cosine 1→0
+    return LambdaLR(optimizer, lr_lambda)
 
 
-def train_neural(model: nn.Module, loaders: dict,
-    tc: config.TrainConfig = None, device: str = "cuda") -> dict:
+def train_neural(model: nn.Module, loaders: dict, tc: config.TrainConfig = None, device: str = "cuda") -> dict:
     """
     Standard training loop with:
-      - Binary cross entropy loss (with class weight balancing)
+      - Binary cross‑entropy loss (with class‑weight balancing)
       - AdamW + cosine annealing
       - Early stopping on val AUROC
     """
@@ -89,23 +97,24 @@ def train_neural(model: nn.Module, loaders: dict,
     device = torch.device(device if torch.cuda.is_available() else "cpu")
     model = model.to(device)
 
-    # class weight for imbalanced mortality
+    # ── class weight: cap pos_weight to prevent gradient explosion ──
     y_train = loaders["train"].dataset.y.numpy()
-    pos_weight = torch.tensor(
-        [(y_train == 0).sum() / max((y_train == 1).sum(), 1)],
-        dtype=torch.float32, device=device,
-    )
+    raw_pw = (y_train == 0).sum() / max((y_train == 1).sum(), 1)
+    capped_pw = min(raw_pw, tc.max_pos_weight)
+    pos_weight = torch.tensor([capped_pw], dtype=torch.float32, device=device)
+    print(f"    pos_weight: raw={raw_pw:.2f}, capped={capped_pw:.2f}")
     criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
-    optimizer = AdamW(model.parameters(), lr=tc.lr, weight_decay=tc.WeightDecay)
-    scheduler = CosineAnnealingLR(optimizer, T_max=tc.epochs)
+    # ── optimizer + warmup‑cosine scheduler ──
+    optimizer = AdamW(model.parameters(), lr=tc.Lr, weight_decay=tc.WeightDecay)
+    scheduler = _get_warmup_cosine_scheduler(optimizer, tc.warmup_epochs, tc.epochs)
 
     best_val_auroc = 0.0
     best_state = None
     patience_counter = 0
 
     for epoch in range(1, tc.epochs + 1):
-        #train
+        # ── train ──
         model.train()
         losses = []
         for x, m, y in loaders["train"]:
@@ -119,13 +128,15 @@ def train_neural(model: nn.Module, loaders: dict,
             losses.append(loss.item())
         scheduler.step()
 
-        #  validate 
+        # ── validate ──
         val_metrics = evaluate_neural(model, loaders["val"], device)
         val_auroc = val_metrics["auroc"]
 
+        cur_lr = optimizer.param_groups[0]["lr"]
         if epoch % 5 == 0 or epoch == 1:
             print(f"    Epoch {epoch:3d}  loss={np.mean(losses):.4f}  "
-                  f"val_auroc={val_auroc:.4f}  val_auprc={val_metrics['auprc']:.4f}")
+                  f"val_auroc={val_auroc:.4f}  val_auprc={val_metrics['auprc']:.4f}  "
+                  f"lr={cur_lr:.6f}")
 
         if val_auroc > best_val_auroc:
             best_val_auroc = val_auroc
@@ -134,7 +145,7 @@ def train_neural(model: nn.Module, loaders: dict,
         else:
             patience_counter += 1
             if patience_counter >= tc.patience:
-                print(f"    Early stop at epoch {epoch}")
+                print(f"    Early stop at epoch {epoch}  (best val_auroc={best_val_auroc:.4f})")
                 break
 
     # restore best
