@@ -25,29 +25,11 @@ def BigQuery(SQL: str) -> pandas.DataFrame:
     print(f"Query Running....")
     DataFrame = client.query(SQL).to_dataframe()
     print(f"Returned: {len(DataFrame):,} rows, {len(DataFrame.columns)} cols")
+    return DataFrame
 
 #Rob BigQuery (step 1)
 
 COT_SQL = f"""
-WITH first_icu AS (
-    -- pick each patient's very first ICU stay
-    SELECT
-        i.subject_id,
-        i.hadm_id,
-        i.stay_id,
-        i.icu_intime,
-        i.icu_outtime,
-        i.los_icu,                                       -- days
-        a.hospital_expire_flag,                          -- 1 = died in hospital
-        ROW_NUMBER() OVER (
-            PARTITION BY i.subject_id
-            ORDER BY i.icu_intime
-        ) AS rn
-    FROM `{config.MIMIC}.icustay_detail` i
-    INNER JOIN `physionet-data.mimiciv_3_1_hosp.admissions` a
-        ON i.hadm_id = a.hadm_id
-    WHERE i.admission_age >= {config.MinAge}
-)
 SELECT
     subject_id,
     hadm_id,
@@ -56,10 +38,12 @@ SELECT
     icu_outtime,
     los_icu,
     hospital_expire_flag AS mortality_label
-FROM first_icu
-WHERE rn = 1
-  AND los_icu >= {config.ObservionWindow / 24}        -- ≥ 48 h LOS
+FROM `{config.MIMIC}.icustay_detail`
+WHERE admission_age >= {config.MinAge}
+  AND first_icu_stay = TRUE
+  AND los_icu >= {config.ObservionWindow / 24}
 ORDER BY stay_id
+
 """
 
 def extract_info() -> pandas.DataFrame:
@@ -70,34 +54,30 @@ def extract_info() -> pandas.DataFrame:
 
 def SQL_vitals(stay_ids: str) -> str:
     cols = ",\n        ".join(
-        f"AVG({f}) AS {f}" for f in config.VitalFeatures
+        f"AVG(CAST({f} AS FLOAT64)) AS {f}" for f in config.VitalFeatures
     )
     return f"""
     SELECT
-        stay_id,
-        TIMESTAMP_DIFF(
-            TIMESTAMP_TRUNC(charttime, HOUR),
-            icu_intime_trunc,
+        v.stay_id,
+        DATETIME_DIFF(
+            DATETIME_TRUNC(v.charttime, HOUR),
+            DATETIME_TRUNC(i.icu_intime, HOUR),
             HOUR
         ) AS hour,
         {cols}
-    FROM (
-        SELECT
-            v.*,
-            TIMESTAMP_TRUNC(i.icu_intime, HOUR) AS icu_intime_trunc
-        FROM `{config.MIMIC}.vitalsign` v
-        INNER JOIN `{config.MIMIC}.icustay_detail` i
-            USING (stay_id)
-        WHERE v.stay_id IN ({stay_ids})
-    )
-    WHERE TIMESTAMP_DIFF(
-            TIMESTAMP_TRUNC(charttime, HOUR),
-            icu_intime_trunc,
+    FROM `{config.MIMIC}.vitalsign` v
+    INNER JOIN `{config.MIMIC}.icustay_detail` i
+        USING (stay_id)
+    WHERE v.stay_id IN ({stay_ids})
+      AND DATETIME_DIFF(
+            DATETIME_TRUNC(v.charttime, HOUR),
+            DATETIME_TRUNC(i.icu_intime, HOUR),
             HOUR
           ) BETWEEN 0 AND {config.ObservionWindow - 1}
-    GROUP BY stay_id, hour
-    ORDER BY stay_id, hour
+    GROUP BY v.stay_id, hour
+    ORDER BY v.stay_id, hour
     """
+
 
 def ExtractVitals(stay_ids: numpy.ndarray) -> pandas.DataFrame:
     print("\nExtracting Vitals....")
@@ -109,107 +89,153 @@ def ExtractVitals(stay_ids: numpy.ndarray) -> pandas.DataFrame:
 def SQL_Labs(stay_ids: str): 
     return f"""
     WITH raw_labs AS (
-        -- chemistry
+        -- chemistry (join on hadm_id → get stay_id)
         SELECT
-            c.stay_id,
-            TIMESTAMP_TRUNC(c.charttime, HOUR) AS chart_hour,
+            i.stay_id,
+            DATETIME_DIFF(
+                DATETIME_TRUNC(c.charttime, HOUR),
+                DATETIME_TRUNC(i.icu_intime, HOUR),
+                HOUR
+            ) AS hour,
             c.albumin,
             c.aniongap,
             c.bicarbonate,
-            c.bilirubin_total,
             c.bun,
             c.calcium,
             c.chloride,
             c.creatinine,
-            c.glucose AS glucose_lab,
+            c.glucose                  AS glucose_lab,
             c.sodium,
             c.potassium,
-            NULL AS hematocrit,
-            NULL AS hemoglobin,
-            NULL AS platelet,
-            NULL AS wbc,
-            NULL AS lactate,
-            NULL AS ptt,
-            NULL AS inr
+            CAST(NULL AS FLOAT64)      AS hematocrit,
+            CAST(NULL AS FLOAT64)      AS hemoglobin,
+            CAST(NULL AS FLOAT64)      AS platelet,
+            CAST(NULL AS FLOAT64)      AS wbc,
+            CAST(NULL AS FLOAT64)      AS lactate,
+            CAST(NULL AS FLOAT64)      AS ptt,
+            CAST(NULL AS FLOAT64)      AS inr
         FROM `{config.MIMIC}.chemistry` c
-        WHERE c.stay_id IN ({stay_ids})
+        INNER JOIN `{config.MIMIC}.icustay_detail` i
+            ON c.hadm_id = i.hadm_id
+        WHERE i.stay_id IN ({stay_ids})
 
         UNION ALL
 
-        -- complete blood count
+        -- complete blood count (join on hadm_id → get stay_id)
         SELECT
-            b.stay_id,
-            TIMESTAMP_TRUNC(b.charttime, HOUR) AS chart_hour,
-            NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+            i.stay_id,
+            DATETIME_DIFF(
+                DATETIME_TRUNC(b.charttime, HOUR),
+                DATETIME_TRUNC(i.icu_intime, HOUR),
+                HOUR
+            ) AS hour,
+            CAST(NULL AS FLOAT64),     -- albumin
+            CAST(NULL AS FLOAT64),     -- aniongap
+            CAST(NULL AS FLOAT64),     -- bicarbonate
+            CAST(NULL AS FLOAT64),     -- bun
+            CAST(NULL AS FLOAT64),     -- calcium
+            CAST(NULL AS FLOAT64),     -- chloride
+            CAST(NULL AS FLOAT64),     -- creatinine
+            CAST(NULL AS FLOAT64),     -- glucose_lab
+            CAST(NULL AS FLOAT64),     -- sodium
+            CAST(NULL AS FLOAT64),     -- potassium
             b.hematocrit,
             b.hemoglobin,
             b.platelet,
             b.wbc,
-            NULL, NULL, NULL
+            CAST(NULL AS FLOAT64),     -- lactate
+            CAST(NULL AS FLOAT64),     -- ptt
+            CAST(NULL AS FLOAT64)      -- inr
         FROM `{config.MIMIC}.complete_blood_count` b
-        WHERE b.stay_id IN ({stay_ids})
+        INNER JOIN `{config.MIMIC}.icustay_detail` i
+            ON b.hadm_id = i.hadm_id
+        WHERE i.stay_id IN ({stay_ids})
 
         UNION ALL
 
-        -- coagulation
+        -- coagulation (join on hadm_id → get stay_id)
         SELECT
-            g.stay_id,
-            TIMESTAMP_TRUNC(g.charttime, HOUR) AS chart_hour,
-            NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-            NULL, NULL, NULL, NULL,
-            NULL,
+            i.stay_id,
+            DATETIME_DIFF(
+                DATETIME_TRUNC(g.charttime, HOUR),
+                DATETIME_TRUNC(i.icu_intime, HOUR),
+                HOUR
+            ) AS hour,
+            CAST(NULL AS FLOAT64),     -- albumin
+            CAST(NULL AS FLOAT64),     -- aniongap
+            CAST(NULL AS FLOAT64),     -- bicarbonate
+            CAST(NULL AS FLOAT64),     -- bun
+            CAST(NULL AS FLOAT64),     -- calcium
+            CAST(NULL AS FLOAT64),     -- chloride
+            CAST(NULL AS FLOAT64),     -- creatinine
+            CAST(NULL AS FLOAT64),     -- glucose_lab
+            CAST(NULL AS FLOAT64),     -- sodium
+            CAST(NULL AS FLOAT64),     -- potassium
+            CAST(NULL AS FLOAT64),     -- hematocrit
+            CAST(NULL AS FLOAT64),     -- hemoglobin
+            CAST(NULL AS FLOAT64),     -- platelet
+            CAST(NULL AS FLOAT64),     -- wbc
+            CAST(NULL AS FLOAT64),     -- lactate
             g.ptt,
             g.inr
         FROM `{config.MIMIC}.coagulation` g
-        WHERE g.stay_id IN ({stay_ids})
+        INNER JOIN `{config.MIMIC}.icustay_detail` i
+            ON g.hadm_id = i.hadm_id
+        WHERE i.stay_id IN ({stay_ids})
 
         UNION ALL
 
-        -- blood gas (for lactate)
+        -- blood gas — lactate only (join on hadm_id → get stay_id)
         SELECT
-            bg.stay_id,
-            TIMESTAMP_TRUNC(bg.charttime, HOUR) AS chart_hour,
-            NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-            NULL, NULL, NULL, NULL,
-            bg.lactate,
-            NULL, NULL
-        FROM `{config.MIMIC}.bg` bg
-        WHERE bg.stay_id IN ({stay_ids})
-    ),
-    with_hour AS (
-        SELECT
-            r.*,
-            TIMESTAMP_DIFF(
-                r.chart_hour,
-                TIMESTAMP_TRUNC(i.icu_intime, HOUR),
+            i.stay_id,
+            DATETIME_DIFF(
+                DATETIME_TRUNC(bg.charttime, HOUR),
+                DATETIME_TRUNC(i.icu_intime, HOUR),
                 HOUR
-            ) AS hour
-        FROM raw_labs r
+            ) AS hour,
+            CAST(NULL AS FLOAT64),     -- albumin
+            CAST(NULL AS FLOAT64),     -- aniongap
+            CAST(NULL AS FLOAT64),     -- bicarbonate
+            CAST(NULL AS FLOAT64),     -- bun
+            CAST(NULL AS FLOAT64),     -- calcium
+            CAST(NULL AS FLOAT64),     -- chloride
+            CAST(NULL AS FLOAT64),     -- creatinine
+            CAST(NULL AS FLOAT64),     -- glucose_lab
+            CAST(NULL AS FLOAT64),     -- sodium
+            CAST(NULL AS FLOAT64),     -- potassium
+            CAST(NULL AS FLOAT64),     -- hematocrit
+            CAST(NULL AS FLOAT64),     -- hemoglobin
+            CAST(NULL AS FLOAT64),     -- platelet
+            CAST(NULL AS FLOAT64),     -- wbc
+            bg.lactate,
+            CAST(NULL AS FLOAT64),     -- ptt
+            CAST(NULL AS FLOAT64)      -- inr
+        FROM `{config.MIMIC}.bg` bg
         INNER JOIN `{config.MIMIC}.icustay_detail` i
-            USING (stay_id)
+            ON bg.hadm_id = i.hadm_id
+        WHERE i.stay_id IN ({stay_ids})
     )
     SELECT
         stay_id,
         hour,
-        AVG(albumin) AS albumin,
-        AVG(aniongap) AS aniongap,
-        AVG(bicarbonate) AS bicarbonate,
-        AVG(bilirubin_total) AS bilirubin_total,
-        AVG(bun) AS bun,
-        AVG(calcium) AS calcium,
-        AVG(chloride) AS chloride,
-        AVG(creatinine) AS creatinine,
-        AVG(glucose_lab) AS glucose_lab,
-        AVG(hematocrit) AS hematocrit,
-        AVG(hemoglobin) AS hemoglobin,
-        AVG(lactate) AS lactate,
-        AVG(platelet) AS platelet,
-        AVG(potassium) AS potassium,
-        AVG(ptt) AS ptt,
-        AVG(inr) AS inr,
-        AVG(sodium) AS sodium,
-        AVG(wbc) AS wbc
-    FROM with_hour
+        AVG(albumin)          AS albumin,
+        AVG(aniongap)         AS aniongap,
+        AVG(bicarbonate)      AS bicarbonate,
+        AVG(bun)              AS bun,
+        AVG(calcium)          AS calcium,
+        AVG(chloride)         AS chloride,
+        AVG(creatinine)       AS creatinine,
+        AVG(glucose_lab)      AS glucose_lab,
+        AVG(hematocrit)       AS hematocrit,
+        AVG(hemoglobin)       AS hemoglobin,
+        AVG(lactate)          AS lactate,
+        AVG(platelet)         AS platelet,
+        AVG(potassium)        AS potassium,
+        AVG(ptt)              AS ptt,
+        AVG(inr)              AS inr,
+        AVG(sodium)           AS sodium,
+        AVG(wbc)              AS wbc
+    FROM raw_labs
     WHERE hour BETWEEN 0 AND {config.ObservionWindow - 1}
     GROUP BY stay_id, hour
     ORDER BY stay_id, hour
@@ -217,7 +243,7 @@ def SQL_Labs(stay_ids: str):
 
 def extract_labs(stay_ids: numpy.ndarray) -> pandas.DataFrame:
     print("Extracting Labs...")
-    csv = "'".join(str(s) for s in stay_ids)
+    csv = ",".join(str(s) for s in stay_ids)
     return BigQuery(SQL_Labs(csv))
 
 #Merge (Step 4)
@@ -358,10 +384,10 @@ def run_pipeline(force_refresh: bool = False):
     labs   = pandas.concat(labs_dfs, ignore_index=True)
 
     # 3. build tensor
-    X, M, y, ids = build_tensor(cohort, vitals, labs)
+    X, M, y, ids = tensor_build(cohort, vitals, labs)
 
     # 4. cache
-    np.savez_compressed(CACHE_FILE, X=X, M=M, y=y, ids=ids)
+    numpy.savez_compressed(CACHE_FILE, X=X, M=M, y=y, ids=ids)
     print(f"  Cached to {CACHE_FILE}")
     return X, M, y, ids
 

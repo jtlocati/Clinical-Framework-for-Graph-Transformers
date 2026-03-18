@@ -15,10 +15,11 @@ MinAge = 18
 
 VitalFeatures = ["heart_rate", "sbp", "dbp", "mbp", "resp_rate", "temperature", "spo2", "glucose",]
 
-LabFeatures  = ["albumin", "aniongap", "bicarbonate", "bilirubin_total", "bun", "calcium", "chloride", "creatinine", "glucose_lab", "hematocrit", "hemoglobin","lactate", "platelet", "potassium", "ptt", "inr", "sodium", "wbc",]
+LabFeatures  = ["albumin", "aniongap", "bicarbonate", "bun", "calcium", "chloride", "creatinine", "glucose_lab", "hematocrit", "hemoglobin","lactate", "platelet", "potassium", "ptt", "inr", "sodium", "wbc",]
 
 TotalFeatures = VitalFeatures + LabFeatures
 
+#26 -> 25
 NumberOfFeatures = len(TotalFeatures)
 
 #Outline Train to .70 second splits:

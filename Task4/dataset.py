@@ -62,7 +62,7 @@ def make_seq_loaders(splits: dict, batch_size: int = None,
     """
     Convenience: turns split dict → DataLoader dict.
     """
-    bs = batch_size or cfg.TrainConfig.batch_size
+    bs = batch_size or cfg.TrainConfig.batch
     loaders = {}
     for name in ["train", "val", "test"]:
         ds = SeqDataset(splits[name]["X"], splits[name]["M"], splits[name]["y"])

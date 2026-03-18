@@ -41,7 +41,7 @@ def main():
 
     device = args.device
     if device == "cuda" and not torch.cuda.is_available():
-        print("⚠️  CUDA not available, falling back to CPU")
+        print("CUDA not available, falling back to CPU")
         device = "cpu"
 
     # ── 1. Load / extract data ──────────────────────────────────
@@ -92,11 +92,11 @@ def main():
               f"AUROC = {row['AUROC_mean']:.4f} ± {row['AUROC_std']:.4f}  |  "
               f"AUPRC = {row['AUPRC_mean']:.4f} ± {row['AUPRC_std']:.4f}")
 
-    # ── 4. Save results ─────────────────────────────────────────
+    # 4. Save results
     df = pd.DataFrame(rows)
     csv_path = os.path.join(config.RESULTS_DIECTORY, "benchmark_results.csv")
     df.to_csv(csv_path, index=False)
-    print(f"\n  📄 Summary saved to {csv_path}")
+    print(f"\nSummary saved to {csv_path}")
 
     # also save full per‑seed results as JSON
     json_path = os.path.join(config.RESULTS_DIECTORY, "benchmark_results_full.json")
@@ -111,9 +111,9 @@ def main():
             }
     with open(json_path, "w") as f:
         json.dump(serializable, f, indent=2)
-    print(f"  📄 Full results saved to {json_path}")
+    print(f" Full results saved to {json_path}")
 
-    # ── 5. Print LaTeX table (handy for papers) ─────────────────
+    # 5 Print LaTeX table
     print("\n  LaTeX table:\n")
     print(r"  \begin{tabular}{lcc}")
     print(r"  \toprule")

@@ -78,14 +78,14 @@ def train_lightgbm(flat_data: dict, seed: int) -> dict:
 
 
 def train_neural(model: nn.Module, loaders: dict,
-                 tc: config.TrainConfig = None, device: str = "cuda") -> dict:
+    tc: config.TrainConfig = None, device: str = "cuda") -> dict:
     """
     Standard training loop with:
       - Binary cross entropy loss (with class weight balancing)
       - AdamW + cosine annealing
       - Early stopping on val AUROC
     """
-    tc = tc or cfg.TrainConfig()
+    tc = tc or config.TrainConfig()
     device = torch.device(device if torch.cuda.is_available() else "cpu")
     model = model.to(device)
 
@@ -97,7 +97,7 @@ def train_neural(model: nn.Module, loaders: dict,
     )
     criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
-    optimizer = AdamW(model.parameters(), lr=tc.lr, weight_decay=tc.weight_decay)
+    optimizer = AdamW(model.parameters(), lr=tc.lr, weight_decay=tc.WeightDecay)
     scheduler = CosineAnnealingLR(optimizer, T_max=tc.epochs)
 
     best_val_auroc = 0.0
