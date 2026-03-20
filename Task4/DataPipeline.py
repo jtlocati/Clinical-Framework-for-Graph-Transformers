@@ -29,6 +29,7 @@ def BigQuery(SQL: str) -> pandas.DataFrame:
 
 #Rob BigQuery (step 1)
 
+#inital query to access feilds of interest.
 COT_SQL = f"""
 SELECT
     subject_id,
@@ -104,7 +105,7 @@ def SQL_Labs(stay_ids: str):
             c.calcium,
             c.chloride,
             c.creatinine,
-            c.glucose                  AS glucose_lab,
+            c.glucose    AS glucose_lab,
             c.sodium,
             c.potassium,
             CAST(NULL AS FLOAT64)      AS hematocrit,
@@ -218,23 +219,23 @@ def SQL_Labs(stay_ids: str):
     SELECT
         stay_id,
         hour,
-        AVG(albumin)          AS albumin,
-        AVG(aniongap)         AS aniongap,
-        AVG(bicarbonate)      AS bicarbonate,
-        AVG(bun)              AS bun,
-        AVG(calcium)          AS calcium,
-        AVG(chloride)         AS chloride,
-        AVG(creatinine)       AS creatinine,
-        AVG(glucose_lab)      AS glucose_lab,
-        AVG(hematocrit)       AS hematocrit,
-        AVG(hemoglobin)       AS hemoglobin,
-        AVG(lactate)          AS lactate,
-        AVG(platelet)         AS platelet,
-        AVG(potassium)        AS potassium,
-        AVG(ptt)              AS ptt,
-        AVG(inr)              AS inr,
-        AVG(sodium)           AS sodium,
-        AVG(wbc)              AS wbc
+        AVG(albumin)    AS albumin,
+        AVG(aniongap)   AS aniongap,
+        AVG(bicarbonate)    AS bicarbonate,
+        AVG(bun)    AS bun,
+        AVG(calcium)    AS calcium,
+        AVG(chloride)   AS chloride,
+        AVG(creatinine)     AS creatinine,
+        AVG(glucose_lab)    AS glucose_lab,
+        AVG(hematocrit)     AS hematocrit,
+        AVG(hemoglobin)     AS hemoglobin,
+        AVG(lactate)    AS lactate,
+        AVG(platelet)   AS platelet,
+        AVG(potassium)  AS potassium,
+        AVG(ptt)    AS ptt,
+        AVG(inr)    AS inr,
+        AVG(sodium)     AS sodium,
+        AVG(wbc)    AS wbc
     FROM raw_labs
     WHERE hour BETWEEN 0 AND {config.ObservionWindow - 1}
     GROUP BY stay_id, hour
@@ -359,10 +360,9 @@ CACHE_FILE = os.path.join(config.DATA_DIRECTORY, "mimic4_icu_mortality_48h.npz")
 
 
 def run_pipeline(force_refresh: bool = False):
-    """
-    Returns X, M, y, stay_ids  (all np arrays, NOT split yet).
-    Splits happen per seed inside the experiment loop.
-    """
+    
+    #Returns X, M, y, stay_ids  (all np arrays, NOT split yet). Splits happen per seed inside the experiment loop.
+
     if os.path.exists(CACHE_FILE) and not force_refresh:
         print(f"Loading cached data from {CACHE_FILE}")
         data = numpy.load(CACHE_FILE)
@@ -394,7 +394,7 @@ def run_pipeline(force_refresh: bool = False):
 
 def prepare_for_seed(X_raw, M, y, ids, seed):
     """
-    Given raw data, do:
+    Given raw data:
       1. split
       2. compute stats on TRAIN only
       3. forward-fill
@@ -413,11 +413,11 @@ def prepare_for_seed(X_raw, M, y, ids, seed):
         Xi_ff = forward_fill(Xi, Mi)
         Xi_norm = normalise(Xi_ff, means, stds)
         processed[name] = {
-            "X": Xi_norm,       # (n, 48, 26) normalised + forward‑filled
-            "M": Mi,            # (n, 48, 26) original mask
-            "y": yi,            # (n,)
+            "X": Xi_norm, # (n, 48, 26) normalised + forward‑filled
+            "M": Mi, # (n, 48, 26) original mask
+            "y": yi, # (n,)
             "ids": idi,
-            "X_raw": Xi,        # un‑normalised (for flat models)
+            "X_raw": Xi, # un‑normalised (for flat models)
         }
 
     print(f"\n  Seed {seed} splits — "
@@ -427,7 +427,7 @@ def prepare_for_seed(X_raw, M, y, ids, seed):
     return processed, means, stds
 
 
-# quick sanity check if run directly
+#sanity check if run directly
 if __name__ == "__main__":
     X, M, y, ids = run_pipeline()
     print(f"\nDataset: {X.shape[0]} patients, {config.ObservionWindow}h, {config.NumberOfFeatures} features")

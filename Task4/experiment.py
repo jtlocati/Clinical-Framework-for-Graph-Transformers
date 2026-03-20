@@ -80,9 +80,9 @@ def _get_warmup_cosine_scheduler(optimizer, warmup_epochs, total_epochs):
 #Linear warmup for `warmup_epochs`, then cosine decay to 0.
     def lr_lambda(epoch):
         if epoch < warmup_epochs:
-            return (epoch + 1) / warmup_epochs          # linear 0→1
+            return (epoch + 1) / warmup_epochs # linear 0→1
         progress = (epoch - warmup_epochs) / max(total_epochs - warmup_epochs, 1)
-        return 0.5 * (1.0 + math.cos(math.pi * progress))   # cosine 1→0
+        return 0.5 * (1.0 + math.cos(math.pi * progress)) # cosine 1→0
     return LambdaLR(optimizer, lr_lambda)
 
 
@@ -97,7 +97,7 @@ def train_neural(model: nn.Module, loaders: dict, tc: config.TrainConfig = None,
     device = torch.device(device if torch.cuda.is_available() else "cpu")
     model = model.to(device)
 
-    # ── class weight: cap pos_weight to prevent gradient explosion ──
+    # class weight: cap pos_weight to prevent gradient explosion
     y_train = loaders["train"].dataset.y.numpy()
     raw_pw = (y_train == 0).sum() / max((y_train == 1).sum(), 1)
     capped_pw = min(raw_pw, tc.max_pos_weight)
@@ -105,7 +105,7 @@ def train_neural(model: nn.Module, loaders: dict, tc: config.TrainConfig = None,
     print(f"    pos_weight: raw={raw_pw:.2f}, capped={capped_pw:.2f}")
     criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
-    # ── optimizer + warmup‑cosine scheduler ──
+    # optimizer + warmup‑cosine scheduler
     optimizer = AdamW(model.parameters(), lr=tc.Lr, weight_decay=tc.WeightDecay)
     scheduler = _get_warmup_cosine_scheduler(optimizer, tc.warmup_epochs, tc.epochs)
 
@@ -114,7 +114,7 @@ def train_neural(model: nn.Module, loaders: dict, tc: config.TrainConfig = None,
     patience_counter = 0
 
     for epoch in range(1, tc.epochs + 1):
-        # ── train ──
+        # train
         model.train()
         losses = []
         for x, m, y in loaders["train"]:
@@ -128,7 +128,7 @@ def train_neural(model: nn.Module, loaders: dict, tc: config.TrainConfig = None,
             losses.append(loss.item())
         scheduler.step()
 
-        # ── validate ──
+        # validate
         val_metrics = evaluate_neural(model, loaders["val"], device)
         val_auroc = val_metrics["auroc"]
 
@@ -204,13 +204,13 @@ def train_pretrained_tst(pretrain_model: PretrainedTSTForPretraining,
 
     #  Phase 2: fine‑tune 
     print("    Phase 2: Fine‑tuning for classification …")
-    encoder = pretrain_model.encoder          # extract pretrained encoder
+    encoder = pretrain_model.encoder #extract pretrained encoder
     ft_model = PretrainedTST(encoder, pc).to(device)
 
     return train_neural(ft_model, loaders, device=str(device))
 
 
-#  Master experiment runner
+#Master experiment-runner
 
 
 ALL_MODELS = [
@@ -226,9 +226,8 @@ ALL_MODELS = [
 
 def run_single(model_name: str, splits: dict, seed: int,
                device: str = "cuda") -> dict:
-    """
-    Run one model on one seed.  Returns dict with val/test metrics.
-    """
+    #Run one model on one seed.  Returns dict with val/test metrics.
+
     print(f"\n  ▶ {model_name}  (seed={seed})")
     t0 = time.time()
 

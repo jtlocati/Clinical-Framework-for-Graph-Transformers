@@ -48,9 +48,9 @@ class FlatDataset:
             out[:, f * 7 + 1] = col.std(axis=1)
             out[:, f * 7 + 2] = col.min(axis=1)
             out[:, f * 7 + 3] = col.max(axis=1)
-            out[:, f * 7 + 4] = col[:, 0]          # first value
-            out[:, f * 7 + 5] = col[:, -1]         # last value
-            out[:, f * 7 + 6] = msk.mean(axis=1)   # % observed
+            out[:, f * 7 + 4] = col[:, 0] # first value
+            out[:, f * 7 + 5] = col[:, -1] # last value
+            out[:, f * 7 + 6] = msk.mean(axis=1) # % observed
         return out
 
     def as_arrays(self):
@@ -78,9 +78,8 @@ def make_seq_loaders(splits: dict, batch_size: int = None,
 
 
 def make_flat_data(splits: dict) -> dict:
-    """
-    Convenience: returns dict of FlatDataset objects.
-    """
+    
+    #Convenience: returns dict of FlatDataset objects.
     flat = {}
     for name in ["train", "val", "test"]:
         flat[name] = FlatDataset(

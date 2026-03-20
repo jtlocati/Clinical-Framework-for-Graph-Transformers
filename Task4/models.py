@@ -48,7 +48,7 @@ class LSTMModel(nn.Module):
     def __init__(self, c: config.LSTMConfig = None):
         super().__init__()
         c = c or config.LSTMConfig()
-        input_dim = config.NumberOfFeatures * 2       # features + mask
+        input_dim = config.NumberOfFeatures * 2 # features + mask
         self.lstm = nn.LSTM(
             input_size=input_dim,
             hidden_size=c.hidden_dim,
@@ -66,10 +66,10 @@ class LSTMModel(nn.Module):
 
     def forward(self, x, mask):
         # x: (B, T, F), mask: (B, T, F)
-        inp = torch.cat([x, mask], dim=-1)   # (B, T, 2F)
-        out, _ = self.lstm(inp)              # (B, T, H)
-        last = out[:, -1, :]                 # (B, H)
-        return self.head(last).squeeze(-1)   # (B,)
+        inp = torch.cat([x, mask], dim=-1) # (B, T, 2F)
+        out, _ = self.lstm(inp) # (B, T, H)
+        last = out[:, -1, :] # (B, H)
+        return self.head(last).squeeze(-1) # (B,)
     
 #Studio Transformer
 class StandardTransformer(nn.Module):
@@ -106,13 +106,13 @@ class StandardTransformer(nn.Module):
 
     def forward(self, x, mask):
         B = x.size(0)
-        inp = torch.cat([x, mask], dim=-1)          # (B, T, 2F)
-        h = self.proj(inp)                           # (B, T, d)
-        cls = self.cls_token.expand(B, -1, -1)       # (B, 1, d)
-        h = torch.cat([cls, h], dim=1)               # (B, T+1, d)
+        inp = torch.cat([x, mask], dim=-1) # (B, T, 2F)
+        h = self.proj(inp)# (B, T, d)
+        cls = self.cls_token.expand(B, -1, -1) # (B, 1, d)
+        h = torch.cat([cls, h], dim=1) # (B, T+1, d)
         h = self.pe(h)
-        h = self.encoder(h)                          # (B, T+1, d)
-        cls_out = h[:, 0, :]                         # (B, d)
+        h = self.encoder(h) # (B, T+1, d)
+        cls_out = h[:, 0, :]   # (B, d)
         return self.head(cls_out).squeeze(-1)
 
 
@@ -146,18 +146,18 @@ class MultiScaleTemporalBlock(nn.Module):
         outs = []
         for scale, attn in zip(self.scales, self.attns):
             if scale == 1:
-                hs = attn(h)                              # (B, T, d)
-                outs.append(hs[:, -1, :])                 # take last step
+                hs = attn(h) # (B, T, d)
+                outs.append(hs[:, -1, :]) # take last step
             else:
                 # average‑pool in time to reduce resolution
                 B, T, D = h.shape
                 T_new = T // scale
                 h_ds = h[:, :T_new * scale, :].reshape(B, T_new, scale, D).mean(dim=2)
-                hs = attn(h_ds)                           # (B, T_new, d)
+                hs = attn(h_ds) # (B, T_new, d)
                 outs.append(hs[:, -1, :])
 
-        fused = torch.cat(outs, dim=-1)                   # (B, d * num_scales)
-        return self.fuse(fused)                            # (B, d)
+        fused = torch.cat(outs, dim=-1)  # (B, d * num_scales)
+        return self.fuse(fused)  # (B, d)
 
 
 class ChronoFormer(nn.Module):
@@ -174,7 +174,7 @@ class ChronoFormer(nn.Module):
         self.proj = nn.Linear(input_dim, c.d_model)
         self.pe   = SinusoidalPE(c.d_model)
 
-        scales = [2 ** i for i in range(c.num_scales)]     # [1, 2, 4]
+        scales = [2 ** i for i in range(c.num_scales)] # [1, 2, 4]
 
         self.blocks = nn.ModuleList([
             MultiScaleTemporalBlock(c.d_model, c.nhead, c.dim_feedforward,
@@ -190,16 +190,16 @@ class ChronoFormer(nn.Module):
 
     def forward(self, x, mask):
         inp = torch.cat([x, mask], dim=-1)
-        h = self.pe(self.proj(inp))                # (B, T, d)
+        h = self.pe(self.proj(inp)) # (B, T, d)
         # Stack blocks, each block returns (B, d) from multi‑scale fusion
         # We re‑broadcast back to sequence for next block
         for i, block in enumerate(self.blocks):
             if i == len(self.blocks) - 1:
                 # last block: just get the pooled output
-                pooled = block(h)                  # (B, d)
+                pooled = block(h)# (B, d)
             else:
-                pooled = block(h)                  # (B, d)
-                h = h + pooled.unsqueeze(1)        # show (B, 1, d)
+                pooled = block(h) # (B, d)
+                h = h + pooled.unsqueeze(1) # show (B, 1, d)
         return self.head(pooled).squeeze(-1)
 
 
@@ -211,19 +211,13 @@ class PatchTST(nn.Module):
     3.  Add positional encoding
     4.  Transformer encoder
     5.  Pool -> classification head
-
-    Each feature channel is handled INDEPENDENTLY (channelindependent design
-    from the paper), then channel outputs are concatenated for classification.
-    For clinical time series with 26 features, full channel independence is
-    expensive, so we offer a "channel mixed" variant that treats all features
-    together (set channel_independent=False).
     """
 
     def __init__(self, c: config.PatchTSTConfig = None, channel_independent: bool = False):
         super().__init__()
         c = c or config.PatchTSTConfig()
         self.channel_independent = channel_independent
-        input_dim = config.NumberOfFeatures * 2          # features + mask
+        input_dim = config.NumberOfFeatures * 2   # features + mask
         self.patch_len = c.patch_len
         self.stride    = c.stride
 
@@ -244,7 +238,7 @@ class PatchTST(nn.Module):
         self.encoder = nn.TransformerEncoder(encoder_layer, num_layers=c.num_layers)
 
         if channel_independent:
-            head_in = c.d_model * input_dim     # one output per channel
+            head_in = c.d_model * input_dim # one output per channel
         else:
             head_in = c.d_model
 
@@ -257,28 +251,28 @@ class PatchTST(nn.Module):
         self.input_dim = input_dim
 
     def _patchify(self, x):
-        """x: (B, T, D) -> (B, num_patches, patch_len * D)"""
+        #x: (B, T, D) -> (B, num_patches, patch_len * D)
         B, T, D = x.shape
         patches = x.unfold(1, self.patch_len, self.stride)    # (B, P, D, patch_len)
         patches = patches.permute(0, 1, 3, 2).reshape(B, self.num_patches, -1)
-        return patches                                         # (B, P, patch_len * D)
+        return patches # (B, P, patch_len * D)
 
     def _encode_patches(self, patches):
-        """patches: (B, P, patch_dim) -> (B, d_model)"""
+        #patches: (B, P, patch_dim) -> (B, d_model)
         B = patches.size(0)
-        h = self.patch_proj(patches)                           # (B, P, d)
+        h = self.patch_proj(patches) # (B, P, d)
         cls = self.cls_token.expand(B, -1, -1)
-        h = torch.cat([cls, h], dim=1)                         # (B, P+1, d)
+        h = torch.cat([cls, h], dim=1) # (B, P+1, d)
         h = self.pe(h)
         h = self.encoder(h)
-        return h[:, 0, :]                                      # CLS output (B, d)
+        return h[:, 0, :] # CLS output (B, d)
 
     def forward(self, x, mask):
-        inp = torch.cat([x, mask], dim=-1)                     # (B, T, 2F)
+        inp = torch.cat([x, mask], dim=-1) # (B, T, 2F)
 
         if not self.channel_independent:
-            patches = self._patchify(inp)                      # (B, P, patch_len * 2F)
-            cls_out = self._encode_patches(patches)            # (B, d)
+            patches = self._patchify(inp) # (B, P, patch_len * 2F)
+            cls_out = self._encode_patches(patches) # (B, d)
             return self.head(cls_out).squeeze(-1)
         else:
             # channel‑independent: process each channel separately
@@ -293,13 +287,13 @@ class PatchTST(nn.Module):
 
 
 
-#  7.  Pretrained TST  (self‑supervised pretrain → fine‑tune)
+# 7.Pretrained TST  (self‑supervised pretrain → fine‑tune)
 
 
 class PretrainedTSTEncoder(nn.Module):
-    """
-    Shared encoder used in both pretraining and fine‑tuning.
-    """
+ 
+    #Shared encoder used in both pretraining and fine‑tuning.
+ 
 
     def __init__(self, c: config.PretrainedTSTConfig):
         super().__init__()
@@ -382,8 +376,8 @@ class PretrainedTST(nn.Module):
 
     def forward(self, x, mask):
         inp = torch.cat([x, mask], dim=-1)
-        h = self.encoder(inp)          # (B, T, d)
-        pooled = h.mean(dim=1)         # (B, d)  mean‑pool over time
+        h = self.encoder(inp) # (B, T, d)
+        pooled = h.mean(dim=1) # (B, d)  mean‑pool over time
         return self.head(pooled).squeeze(-1)
 
 

@@ -31,12 +31,12 @@ Seeds = [42, 123, 2024]
 #Training params:
 @dataclass
 class TrainConfig:
-    batch: int = 128       # smaller batches = more stable gradients
-    Lr: float = 5e-4            # lower LR to prevent overshoot
+    batch: int = 128 # smaller batches = more stable gradients
+    Lr: float = 5e-4 # lower LR to prevent overshoot
     WeightDecay: float = 1e-4
     epochs: int = 80
-    patience: int = 10          # more patience — neural models need time
-    warmup_epochs: int = 5      # linear warmup before cosine decay
+    patience: int = 10 # more patience -> neural models need time
+    warmup_epochs: int = 5 # linear warmup before cosine decay
     max_pos_weight: float = 3.0 # cap class weight to prevent gradient explosion
     num_workers: int = 0
     #num_workers = 4  #possibly edit to zero if running on a Microsoft machine to avoid 'SHAP' value errors?
@@ -59,8 +59,8 @@ class TransformerConfig:
 
 @dataclass
 class PatchTSTConfig:
-    patch_len: int = 6          # patch length in time steps
-    stride: int = 3             # stride between patches
+    patch_len: int = 6 # patch length in time steps
+    stride: int = 3 # stride between patches
     d_model: int = 64
     nhead: int = 4
     num_layers: int = 3
@@ -74,18 +74,18 @@ class ChronoFormerConfig:
     num_layers: int = 2
     dim_feedforward: int = 128
     dropout: float = 0.2
-    num_scales: int = 3         # temporal resolutions
+    num_scales: int = 3 # temporal resolutions
 
 @dataclass
 class PretrainedTSTConfig:
-#- Phase 1: self‑supervised masked‑reconstruction pretraining
-#- Phase 2: fine-tune the encoder for classification
+#- Step 1: self‑supervised masked‑reconstruction pretraining
+#- Step 2: fine-tune the encoder for classification
     d_model: int = 64
     nhead: int = 4
     num_layers: int = 3
     dim_feedforward: int = 128
     dropout: float = 0.2
-    mask_ratio: float = 0.40    # fraction of time steps masked during pretraining
+    mask_ratio: float = 0.40 # fraction of time steps masked during pretraining
     pretrain_epochs: int = 30
     pretrain_lr: float = 1e-3
 
