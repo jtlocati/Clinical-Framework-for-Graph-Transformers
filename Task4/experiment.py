@@ -28,7 +28,7 @@ def compute_metrics(y_true: np.array, y_prob: np.ndarray) -> dict:
 
 #Traditional Models:
 def train_logistic_regression(flat_data: dict, seed: int) -> dict:
-    """Logistic Regression on flattened summary features."""
+    #Logistic Regression on flattened summary features.
     X_tr, y_tr = flat_data["train"].as_arrays()
     X_val, y_val = flat_data["val"].as_arrays()
     X_te, y_te = flat_data["test"].as_arrays()
@@ -50,7 +50,7 @@ def train_logistic_regression(flat_data: dict, seed: int) -> dict:
 
 
 def train_lightgbm(flat_data: dict, seed: int) -> dict:
-    """LightGBM on flattened summary features."""
+    #LightGBM on flattened summary features.
     X_tr, y_tr = flat_data["train"].as_arrays()
     X_val, y_val = flat_data["val"].as_arrays()
     X_te, y_te = flat_data["test"].as_arrays()
@@ -89,7 +89,7 @@ def _get_warmup_cosine_scheduler(optimizer, warmup_epochs, total_epochs):
 def train_neural(model: nn.Module, loaders: dict, tc: config.TrainConfig = None, device: str = "cuda") -> dict:
     """
     Standard training loop with:
-      - Binary cross‑entropy loss (with class‑weight balancing)
+      - Binary loss
       - AdamW + cosine annealing
       - Early stopping on val AUROC
     """

@@ -1,6 +1,5 @@
-"""
-inspect_schema.py — Print the actual column names inside each MIMIC table
-"""
+#inspect_schema.py — Print the actual column names inside each MIMIC table
+
 from DataPipeline import get_client
 import pandas
 

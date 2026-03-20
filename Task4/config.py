@@ -59,14 +59,13 @@ class TransformerConfig:
 
 @dataclass
 class PatchTSTConfig:
+    patch_len: int = 6          # patch length in time steps
+    stride: int = 3             # stride between patches
     d_model: int = 64
     nhead: int = 4
     num_layers: int = 3
     dim_feedforward: int = 128
     dropout: float = 0.2
-    mask_ratio: float = 0.40    # fraction of time steps masked during pretraining
-    pretrain_epochs: int = 30
-    pretrain_lr: float = 5e-4
 
 @dataclass
 class ChronoFormerConfig:

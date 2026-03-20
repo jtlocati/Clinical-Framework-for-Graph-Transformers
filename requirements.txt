@@ -1,5 +1,10 @@
-#Used for packages not included within YAIB's requirements.txt, empty for now (2/25/2026).
+#Used for packages not included within YAIB's requirements.txt
 
-pandas pyarrow
+pandas
 scikit-learn
 google-cloud-bigquery
+pandas>=1.5
+numpy>=1.23
+scikit-learn>=1.2
+lightgbm>=3.3
+torch>=2.0

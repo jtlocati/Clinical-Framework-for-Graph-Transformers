@@ -5,7 +5,7 @@ Usage:
     python run_all.py                    # run everything
     python run_all.py --models LSTM PatchTST   # run subset
     python run_all.py --device cpu       # force CPU
-    python run_all.py --refresh-data     # re‑query BigQuery
+    python run_all.py --refresh-data     # requery BigQuery
 """
 
 import argparse, json, os, time
@@ -19,7 +19,7 @@ from experiment import run_single, ALL_MODELS
 
 
 def set_seed(seed: int):
-    """Set random seed for reproducibility across all libraries."""
+    #Set random seed for reproducibility across all libraries.
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
@@ -44,7 +44,7 @@ def main():
         print("CUDA not available, falling back to CPU")
         device = "cpu"
 
-    # ── 1. Load / extract data ──────────────────────────────────
+    # 1. Load / extract data 
     print("=" * 70)
     print("  ICU MORTALITY BENCHMARK — MIMIC‑IV (48 h, in‑hospital mortality)")
     print("=" * 70)
@@ -53,7 +53,7 @@ def main():
           f"mortality rate: {y.mean():.3f}  |  "
           f"features: {config.NumberOfFeatures}")
 
-    # ── 2. Run experiments ──────────────────────────────────────
+    # 2. Run experiments 
     # results[model_name][seed] = {"val": {...}, "test": {...}}
     results = {m: {} for m in args.models}
 
@@ -71,7 +71,7 @@ def main():
             result = run_single(model_name, splits, seed, device)
             results[model_name][seed] = result
 
-    # ── 3. Aggregate and report ─────────────────────────────────
+    #3. Aggregate and report 
     print("\n" + "=" * 70)
     print("  RESULTS SUMMARY")
     print("=" * 70)
@@ -98,9 +98,9 @@ def main():
     df.to_csv(csv_path, index=False)
     print(f"\nSummary saved to {csv_path}")
 
-    # also save full per‑seed results as JSON
+    # also save full per‑seed results as JSON under Task4\results
     json_path = os.path.join(config.RESULTS_DIECTORY, "benchmark_results_full.json")
-    # convert numpy types for JSON serialization
+    # convert numpy types for JSON interpritatin
     serializable = {}
     for model_name, seed_dict in results.items():
         serializable[model_name] = {}
@@ -113,7 +113,7 @@ def main():
         json.dump(serializable, f, indent=2)
     print(f" Full results saved to {json_path}")
 
-    # 5 Print LaTeX table
+    # 5 Print LaTeX table because why not
     print("\n  LaTeX table:\n")
     print(r"  \begin{tabular}{lcc}")
     print(r"  \toprule")
