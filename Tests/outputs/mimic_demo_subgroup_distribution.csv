@@ -1,0 +1,6 @@
+group,count,positive_label_count,positive_rate,enough_samples_in30
+age_65plus,26555,4524,0.17036339672378084,True
+age_40_65,16592,2030,0.12234811957569913,True
+age_<40,3719,315,0.0847001882226405,True
+sex_male,0,0,,False
+sex_female,0,0,,False

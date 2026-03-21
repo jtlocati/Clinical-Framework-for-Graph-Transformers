@@ -1,0 +1,6 @@
+group,count,AUC,note
+age_<40,3719,,Single class
+age_40_65,16592,,Single class
+age_65plus,26555,,Single class
+sex_male,0,,Too few samples
+sex_female,0,,Too few samples

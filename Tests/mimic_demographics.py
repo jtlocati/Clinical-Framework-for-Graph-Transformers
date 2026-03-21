@@ -1,22 +1,34 @@
+#Task 4
 import numpy
 import pandas
 from pathlib import Path
 from sklearn.metrics import roc_auc_score
+from google.cloud import bigquery
 
 #Change to envion varible
-DATA_ROOT = Path(r"C:\Users\jetlo\OneDrive\Documents\GitHub\YAIB\demo_data\mortality24\mimic_demo")
+BQ_PROJECT = "project-bb25f1c3-ff0a-47c9-9d0"
+MIMIC_DATASET = "physionet-data.mimiciv_3_1_derived"
+def get_client():
+    return bigquery.Client(project=BQ_PROJECT)
 
 OUT_DIRECTORY = Path("outputs")
 OUT_DIRECTORY .mkdir(exist_ok=True)
 
-#loading MIMIC
-sta = pandas.read_parquet(DATA_ROOT / "sta.parquet")
-outc = pandas.read_parquet(DATA_ROOT / "outc.parquet")
+#Extract data from mimic
+print(f"Querying for cohart demographics. root:{BQ_PROJECT}.{MIMIC_DATASET}")
+Client = get_client()
+BQquery = f"""
+SELECT stay_id, gender AS sex, admission_age AS age, race, hospital_expire_flag AS label
+FROM `{MIMIC_DATASET}.icustay_detail`
+WHERE admission_age >= 18 AND los_icu >= 2
+ORDER BY stay_id"""
 
-#MERGE into one table so that one row per stat_id
-table = sta.merge(outc, on="stay_id", how="inner", validate="one_to_one")
+pat_data = Client.query(BQquery).to_dataframe()
+print(f"Returned inital data: {len(pat_data):,}")
 
-new_table = table[["stay_id", "age", "sex", "label"]].copy()
+new_table = pat_data[["stay_id", "age", "sex", "race", "label"]].copy()
+
+
 
 #specify Male/Female only
 
