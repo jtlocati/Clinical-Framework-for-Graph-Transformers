@@ -2,5 +2,12 @@ group,count,AUC,note
 age_<40,3719,,Single class
 age_40_65,16592,,Single class
 age_65plus,26555,,Single class
-sex_male,0,,Too few samples
-sex_female,0,,Too few samples
+sex_male,26525,,Single class
+sex_female,20341,,Single class
+race_white,30674,,Single class
+race_black,4994,,Single class
+race_Hispanic,1708,,Single class
+race_asian,1379,,Single class
+race_multipule,31,,Single class
+race_other,3350,,Single class
+race_unknown,4730,,Single class
