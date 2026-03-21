@@ -178,15 +178,15 @@ def evaluate_neural(model: nn.Module, loader, device) -> dict:
 def train_pretrained_tst(pretrain_model: PretrainedTSTForPretraining,
                          loaders: dict, device: str = "cuda") -> dict:
     """
-    Phase 1: Self‑supervised masked reconstruction pretraining
-    Phase 2: Fine‑tune encoder + classification head
+    Phase 1: SelFsupervised masked reconstruction pretraining
+    Phase 2: Finetune encoder + classification head
     """
     pc = config.PretrainedTSTConfig()
     device = torch.device(device if torch.cuda.is_available() else "cpu")
     pretrain_model = pretrain_model.to(device)
 
     #  Phase 1: pretrain 
-    print("    Phase 1: Self‑supervised pretraining …")
+    print("    Phase 1: Selfsupervised pretraining …")
     optimizer = AdamW(pretrain_model.parameters(), lr=pc.pretrain_lr)
     for epoch in range(1, pc.pretrain_epochs + 1):
         pretrain_model.train()
