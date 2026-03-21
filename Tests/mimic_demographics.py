@@ -6,6 +6,7 @@ from sklearn.metrics import roc_auc_score
 from google.cloud import bigquery
 
 #Change to envion varible
+super_cool_term_outp_orgaizer = "================================================================================="
 BQ_PROJECT = "project-bb25f1c3-ff0a-47c9-9d0"
 MIMIC_DATASET = "physionet-data.mimiciv_3_1_derived"
 def get_client():
@@ -13,6 +14,23 @@ def get_client():
 
 OUT_DIRECTORY = Path("outputs")
 OUT_DIRECTORY .mkdir(exist_ok=True)
+
+def get_race(race):
+    race = str(race).upper()
+    if "WHITE" in race:
+        return "White"
+    elif "BLACK" in race:
+        return "Black"
+    elif "HISPANIC" in race:
+        return "Hispanic"
+    elif "ASIAN" in race:
+        return "Asian"
+    elif "MULTIPLE RACE/ETHNICITY" in race:
+        return "Multipule"
+    elif "UNKNOWN" in race:
+        return "Unknown"
+    return "Other"
+
 
 #Extract data from mimic
 print(f"Querying for cohart demographics. root:{BQ_PROJECT}.{MIMIC_DATASET}")
@@ -27,6 +45,12 @@ pat_data = Client.query(BQquery).to_dataframe()
 print(f"Returned inital data: {len(pat_data):,}")
 
 new_table = pat_data[["stay_id", "age", "sex", "race", "label"]].copy()
+#View OG table
+print(f"{super_cool_term_outp_orgaizer} Og Table {super_cool_term_outp_orgaizer}")
+print(new_table)
+
+new_table["race"] = new_table["race"].apply(get_race)
+
 
 
 
@@ -36,7 +60,15 @@ new_table = pat_data[["stay_id", "age", "sex", "race", "label"]].copy()
 
 new_table["age_group"] = pandas.cut(new_table["age"], bins=[-numpy.inf, 40, 65, numpy.inf], labels=["<40", "40-65", "65+"],right=False)
 
-simple_label = {"age_<40": (new_table["age_group"] == "<40"), "age_40_65": (new_table["age_group"] == "40-65"), "age_65plus": (new_table["age_group"] == "65+"), "sex_male": (new_table["sex"] == "Male"), "sex_female": (new_table["sex"] == "Female"),}
+simple_label = {
+    #age
+    "age_<40": (new_table["age_group"] == "<40"), "age_40_65": (new_table["age_group"] == "40-65"), "age_65plus": (new_table["age_group"] == "65+"),
+    #sex
+    "sex_male": (new_table["sex"] == "M"), "sex_female": (new_table["sex"] == "F"),
+    #Race
+    "race_white": (new_table["race"] == "White"), "race_black": (new_table["race"] == "Black"), "race_Hispanic": (new_table["race"] == "Hispanic"), "race_asian": (new_table["race"] == "Asian"), "race_multipule": (new_table["race"] == "Multipule"), "race_other": (new_table["race"] == "Other"), "race_unknown": (new_table["race"] == "Unknown")
+    
+    }
 
 #Distrobution table:\
 
@@ -68,9 +100,7 @@ dist.to_csv(dist_path, index=False)
 
 print("=======================================================DISTROBUTION TABLE=======================================================")
 
-filler = "================================================================================="
-
-print(f"SAVED: {dist_path}\n{filler}\n{dist}\n{filler}")
+print(f"SAVED: {dist_path}\n{super_cool_term_outp_orgaizer}\n{dist}\n{super_cool_term_outp_orgaizer}")
 
 print("Groups below 30 minimum:")
 print(dist.loc[~dist["enough_samples_in30"], ["group", "count"]])
