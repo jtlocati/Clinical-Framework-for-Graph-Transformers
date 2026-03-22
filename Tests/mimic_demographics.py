@@ -132,7 +132,7 @@ for name, mask in simple_label.items():
     sub_y_true = y_true[mask_array]
     sub_y_prob = y_prob[mask_array]
 
-    if len(set(sub_y_true)) < 3:
+    if len(set(sub_y_true)) < 2:
         subgroup_results.append({"group": name, "count": n, "AUC": None, "note": "Single class"})
         continue
     auc = roc_auc_score(sub_y_true, sub_y_prob)
