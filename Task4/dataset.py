@@ -13,16 +13,17 @@ class SeqDataset(Dataset):
       y    : scalar long tensor   — mortality label
     """
 
-    def __init__(self, X: numpy.ndarray, M: numpy.ndarray, y: numpy.ndarray):
+    def __init__(self, X: numpy.ndarray, M: numpy.ndarray, y: numpy.ndarray, ids: numpy.ndarray):
         self.X = torch.from_numpy(X).float() # (N, T, F)
         self.M = torch.from_numpy(M).float() # (N, T, F)
         self.y = torch.from_numpy(y).long() # (N,)
+        self.ids = ids
 
     def __len__(self):
         return len(self.y)
 
     def __getitem__(self, idx):
-        return self.X[idx], self.M[idx], self.y[idx]
+        return self.ids[idx], self.X[idx], self.M[idx], self.y[idx]
 
 
 class FlatDataset:
@@ -65,7 +66,7 @@ def make_seq_loaders(splits: dict, batch_size: int = None,
     bs = batch_size or cfg.TrainConfig.batch
     loaders = {}
     for name in ["train", "val", "test"]:
-        ds = SeqDataset(splits[name]["X"], splits[name]["M"], splits[name]["y"])
+        ds = SeqDataset(splits[name]["X"], splits[name]["M"], splits[name]["y"], splits[name]["ids"])
         loaders[name] = DataLoader(
             ds,
             batch_size=bs,

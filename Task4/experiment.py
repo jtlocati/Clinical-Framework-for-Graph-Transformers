@@ -117,7 +117,7 @@ def train_neural(model: nn.Module, loaders: dict, tc: config.TrainConfig = None,
         # train
         model.train()
         losses = []
-        for x, m, y in loaders["train"]:
+        for ids, x, m, y in loaders["train"]:
             x, m, y = x.to(device), m.to(device), y.float().to(device)
             logits = model(x, m)
             loss = criterion(logits, y)
@@ -151,25 +151,52 @@ def train_neural(model: nn.Module, loaders: dict, tc: config.TrainConfig = None,
     # restore best
     model.load_state_dict(best_state)
     model.to(device)
+    val_m = evaluate_neural(model, loaders["val"], device)
+    test_out = evaluate_neural(model, loaders["test"], device, return_outputs=True)
 
-    val_m  = evaluate_neural(model, loaders["val"], device)
-    test_m = evaluate_neural(model, loaders["test"], device)
-    return {"val": val_m, "test": test_m}
+    test_m = {
+        "auroc": test_out["auroc"],
+        "auprc": test_out["auprc"],
+    }
+
+    return {
+        "val": val_m,
+        "test": test_m,
+        "test_outputs": {
+                "ids": test_out["ids"],
+                "y_true": test_out["y_true"],
+                "y_prob": test_out["y_prob"],
+                },
+    }
 
 
-def evaluate_neural(model: nn.Module, loader, device) -> dict:
+def evaluate_neural(model: nn.Module, loader, device, return_outputs: bool = False):
     model.eval()
-    all_y, all_p = [], []
+    all_ids, all_y, all_p = [], [], []
     with torch.no_grad():
-        for x, m, y in loader:
+        for ids, x, m, y in loader:
             x, m = x.to(device), m.to(device)
             logits = model(x, m)
             probs = torch.sigmoid(logits).cpu().numpy()
+            all_ids.append(np.asarray(ids))
             all_y.append(y.numpy())
             all_p.append(probs)
+
+    y_ids = np.concatenate(all_ids)
     y_true = np.concatenate(all_y)
     y_prob = np.concatenate(all_p)
-    return compute_metrics(y_true, y_prob)
+
+    metrics = compute_metrics(y_true, y_prob)
+
+    if return_outputs:
+        return {
+            "ids": y_ids,
+            "y_true": y_true,
+            "y_prob": y_prob,
+            **metrics,
+        }
+
+    return metrics
 
 
 #  PretrainedTST two‑phase training
