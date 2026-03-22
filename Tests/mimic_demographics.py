@@ -156,7 +156,7 @@ auc_table.to_csv(auc_path, index=False)
 
 print(f"\nSaved AUC table: {auc_path}")
 
+#Task 2 does not require computing AUC or fairness metrics yet. only test to see if subgroup has sufficient sample size to support reliable evaluation in later tasks.
 print("=======================================================AUC table=======================================================")   
 
 print(f"\nSubgroup AUC table results\n{auc_table}")
-print(f"\nRow-level demographics file ready for joining on stay_id: {row_level_path}")
