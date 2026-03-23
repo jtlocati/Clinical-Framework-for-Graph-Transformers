@@ -28,20 +28,20 @@ Test_Frac = .15 #-> sets the Test time to .15 seconds
 
 Seeds = [42, 123, 2024]
 
-#Training params:
+# Training params:
 @dataclass
 class TrainConfig:
-    batch: int = 128 # smaller batches = more stable gradients
-    Lr: float = 5e-4 # lower LR to prevent overshoot
+    batch: int = 32 # smaller batches for testing; increase to 128 or 256 for final runs
+    Lr: float = 5e-4 # lower LR to prevent overshoot; may want to increase for faster convergence during testing
     WeightDecay: float = 1e-4
-    epochs: int = 80
-    patience: int = 10 # more patience -> neural models need time
-    warmup_epochs: int = 5 # linear warmup before cosine decay
-    max_pos_weight: float = 3.0 # cap class weight to prevent gradient explosion
+    epochs: int = 8
+    patience: int = 3 #neural models need time
+    warmup_epochs: int = 2 # linear warmup before cosine decay
+    max_pos_weight: float = 3.0  # cap class weight to prevent gradient explosion
     num_workers: int = 0
     #num_workers = 4  #possibly edit to zero if running on a Microsoft machine to avoid 'SHAP' value errors?
 
-#Model params:
+# Model params:
 @dataclass
 class LSTMConfig:
     hidden_dim: int = 128
@@ -88,6 +88,15 @@ class PretrainedTSTConfig:
     mask_ratio: float = 0.40 # fraction of time steps masked during pretraining
     pretrain_epochs: int = 30
     pretrain_lr: float = 1e-3
+
+@dataclass
+class TGTConfig:
+    d_model: int = 64
+    nhead: int = 4
+    num_layers: int = 2
+    dim_feedforward: int = 128
+    dropout: float = 0.2
+    edge_mode: str = "both"   # temporal_only, clinical_only, both
 
 #Light GBM params
 LGBM_PARAMS = {"objective": "binary","metric": ["auc", "average_precision"],"learning_rate": 0.05,"num_leaves": 63,"max_depth": 7,"min_child_samples": 50,"subsample": 0.8,"colsample_bytree": 0.8,"verbose": -1,"n_jobs": -1,}

@@ -248,6 +248,10 @@ ALL_MODELS = [
     "ChronoFormer",
     "PatchTST",
     "PretrainedTST",
+    "TGTTemporal",
+    "TGTClinical",
+    "TGTFull",
+    "TGT",
 ]
 
 
@@ -278,7 +282,7 @@ def run_single(model_name: str, splits: dict, seed: int,
         result = train_neural(model, loaders, device=device)
 
     elapsed = time.time() - t0
-    print(f"    ✅ Done in {elapsed:.1f}s  |  "
+    print(f"Done in {elapsed:.1f}s  |  "
           f"test AUROC={result['test']['auroc']:.4f}  "
           f"AUPRC={result['test']['auprc']:.4f}")
     return result
