@@ -7,10 +7,9 @@ Ovgerview:
 
 import math
 import torch
-import torch.nn
 
 #This class initalizes Standard sinsodal positional encoding. Adding time-step information to each node so edges can be drawn in Graph.py Temporal Agacent
-#(Connects same mimic stay_id nodes through time)
+#(sets up connection for same mimic stay_id nodes through time)
 #*
 class SinusoidalPE(torch.nn.Module):
     def __init__(self, Model, max_length = 48):
@@ -27,5 +26,44 @@ class SinusoidalPE(torch.nn.Module):
         #Format: (1, 48, Model)
         self.register_buffer("pe", pe.unsqueeze(0))
 
+    #inject the time data into node.
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return x + self.pe[:, :x.size(1), :]
+    
+
+#Transformer masked by adjacency (each node connects to neighbor relative to time (1 -> 48), no connections drawn to other nodes)
+class GraphTransformer(torch.nn.Module):
+    def __init__(self, Model, nhead, feedforward, dropout):
+        super().__init__()
+
+        #multi-head attention:
+        self.attn = torch.nn.MultiheadAttention(embed_dim=Model, num_heads=nhead, dropout=dropout, batch_first=True)
+
+        self.norm1 = torch.nn.LayerNorm(Model)
+        self.norm2 = torch.nn.LayerNorm(Model)
+
+        #Set the feedforward network to connect back to ___
+        self.ffn = torch.nn.Sequential(torch.nn.Linear(Model, feedforward), torch.nn.GELU(), torch.nn.Dropout(dropout), torch.nn.Linear(feedforward, Model), torch.nn.Dropout(dropout))
+
+        self.dropout = torch.nn.Dropout(dropout)
+
+    def forwards(self, x: torch.Tensor, attnMSK: torch.Tensor) -> torch.Tensor:
+        #Initalize the muliti-head attention with graph mask.
+        # resid + x is a residual connection.
+        resid = x = self.norm1(x)
+        x, _ = self.attn(x, x, x, attn_mask=attnMSK)
+        x = self.dropout(x)
+        x=resid + x
+
+        #feedforwarf
+        resid = x
+        x = self.norm2(x)
+        x = self.ffn(x)
+        x = resid + x
+
+        return x
+
+
+#Full model initalization (end-to-end)
+
+
