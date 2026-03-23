@@ -45,7 +45,7 @@ DataFrafeFeature = SingleICU[cols].copy()
 # if value is not None -> 1 else -> 0
 MissingMask = DataFrafeFeature.notna().astype(float).to_numpy()
 
-#Replace missing values with 0
+
 featues = DataFrafeFeature.fillna(0).astype(numpy.float32).to_numpy()
 
 print("=============== MASKS ===================")
@@ -54,7 +54,7 @@ print("missing_mask shape:", MissingMask.shape)
 print("first feature row:", featues[0])
 print("first mask row:", MissingMask[0])
 
-#build graph:
+
 @dataclass
 class Graph:
     x: numpy.ndarray
@@ -78,7 +78,6 @@ class GraphBuilder:
                 edges.append((t, t+1))
                 edge_types.append(0)
         
-        #clinical edges
         if self.edge_make in {"clinical_only", "both"}:
             for t in range(len(features) -1):
                 for _, idxs in self.clinical_groups.items():
@@ -119,15 +118,15 @@ def test_one_patient_graph(graph, featues, missing_mask):
     assert missing_mask.ndim == 2
     assert featues.shape == missing_mask.shape
 
-    # x should be [featues || mask]
+
     assert graph.x.shape[0] == featues.shape[0]
     assert graph.x.shape[1] == featues.shape[1] * 2
 
-    # edge_index should have shape [2, E]
+    # shape: [2, E]
     assert graph.edge_index.shape[0] == 2
     assert graph.edge_index.shape[1] == graph.edge_type.shape[0]
 
-    # for 14 nodes, temporal edges should be 13
+    # for 14 nodes mean that edges should be 13
     temporal_edges = int((graph.edge_type == 0).sum())
     assert temporal_edges == featues.shape[0] - 1
 

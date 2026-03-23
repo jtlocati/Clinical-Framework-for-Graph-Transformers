@@ -31,12 +31,12 @@ Seeds = [42, 123, 2024]
 #Training params:
 @dataclass
 class TrainConfig:
-    batch: int = 128 # smaller batches = more stable gradients
+    batch: int = 128
     Lr: float = 5e-4 # lower LR to prevent overshoot
     WeightDecay: float = 1e-4
     epochs: int = 80
-    patience: int = 10 # more patience -> neural models need time
-    warmup_epochs: int = 5 # linear warmup before cosine decay
+    patience: int = 10 
+    warmup_epochs: int = 5 
     max_pos_weight: float = 3.0 # cap class weight to prevent gradient explosion
     num_workers: int = 0
     #num_workers = 4  #possibly edit to zero if running on a Microsoft machine to avoid 'SHAP' value errors?
