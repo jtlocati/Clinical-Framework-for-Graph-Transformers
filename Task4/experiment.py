@@ -224,8 +224,7 @@ ALL_MODELS = [
 ]
 
 
-def run_single(model_name: str, splits: dict, seed: int,
-               device: str = "cuda") -> dict:
+def run_single(model_name: str, splits: dict, seed: int, device: str = "cuda") -> dict:
     #Run one model on one seed.  Returns dict with val/test metrics.
 
     print(f"\n  ▶ {model_name}  (seed={seed})")
