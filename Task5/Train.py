@@ -7,6 +7,7 @@ from sklearn.metrics import roc_auc_score , average_precision_score
 import ClinGroups
 import Graph
 import Models
+from Task4.config import TrainConfig
 
 #simple DS that returns (node feature, labels) ((hours, features), (Mortality (1 or 0)))
 class GraphData(torch.utils.data.Dataset):
@@ -30,6 +31,7 @@ def Warmup(optimiser, warmup_epochs, total_epoch):
     return LearnLambda(optimiser, LearnLambda)
 
 #Optimiser: compute AUROC and AUPRC on loader
+#*
 def Optimiser(model, loader, attention_mask, device):
     model.eval()
     all_y = []
@@ -48,4 +50,33 @@ def Optimiser(model, loader, attention_mask, device):
         "auprc": average_precision_score(YTrue, PTrue)
     }
         
-        
+"""
+    Train one Temporal Graph Transformer variant on one seed.
+
+    Parameters
+    ----------
+    variant : "temporal_only" | "clinical_only" | "full_graph"
+    splits  : dict from data_pipeline.prepare_for_seed()
+    seed    : random seed for reproducibility
+    device  : "cuda" or "cpu"
+
+    Returns
+    -------
+    result  : dict with "val" and "test" sub-dicts (each has auroc, auprc)
+    log     : dict with per-epoch training history (for convergence plots)
+"""       
+
+def FullModel(var: str, splits: dict, seed: int, device: str = "cuda") -> tuple:
+        ModelConfig = ClinGroups.TGTModelConfig()
+        TrainConfigure = TrainConfig()
+        #If CUDA is avalable then implement, while working localy leve device = "cpu"
+        device =  torch.device(device if torch.cuda.is_available() else "cpu")
+        device = "cpu"
+
+        #Grpah Node Features:
+        x_train = Graph.PrepInput(splits["train"]["X"], splits["train"]["x"])
+        x_value = Graph.PrepInput(splits["val"]["X"], splits["val"]["M"])
+        X_test = Graph.PrepInput(splits["test"]["X"], splits["test"]["M"])
+        x_train = splits["train"]['y']
+        x_value = splits["val"]["y"]
+        X_test = splits["test"]["y"]
