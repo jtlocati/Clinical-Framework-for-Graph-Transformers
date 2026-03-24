@@ -382,22 +382,6 @@ class PretrainedTST(nn.Module):
 
 # TGT
 class TGTModel(nn.Module):
-    """
-    Minimal TGT prototype.
-
-    Current version:
-    - input = [features || mask]
-    - linear projection to d_model
-    - sinusoidal positional encoding
-    - transformer encoder
-    - mean pooling over time
-    - binary prediction head
-
-    Note:
-    This first version keeps the Task 5 interface and config shape,
-    but does not yet use explicit graph edges in attention.
-    """
-
     def __init__(self, c: config.TGTConfig = None):
         super().__init__()
         c = c or config.TGTConfig()
@@ -423,11 +407,17 @@ class TGTModel(nn.Module):
             nn.Dropout(c.dropout),
             nn.Linear(c.d_model, 1),
         )
+
     def _clinical_groups(self, num_features):
-        # simple starter grouping over the 25 raw features
         return {
-            "vitals": list(range(8)),
-            "labs": list(range(8, num_features)),
+            "cardiovascular": [0, 1, 2, 3],# heart_rate, sbp, dbp, mbp
+            "respiratory": [4, 5, 6], # resp_rate, temperature, spo2
+            "metabolic": [7, 9, 10, 12, 13, 20, 23],# glucose, aniongap, bicarbonate, calcium, chloride, potassium, sodium
+            "renal": [11, 14],# bun, creatinine
+            "hematologic": [16, 17, 19, 21, 22, 24],# hematocrit, hemoglobin, platelet, ptt, inr, wbc
+            "hepatic_nutrition": [8],# albumin
+            "perfusion": [18],# lactate
+            "lab_glucose": [15],# glucose_lab
         }
     
     def _build_adj(self, missing_mask_one_patient):
