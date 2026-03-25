@@ -13,7 +13,7 @@ import numpy
 import pandas
 from google.cloud import bigquery 
 from sklearn.model_selection import train_test_split
-import config
+from . import config
 
 #initalize big query:
 def get_client() -> bigquery.Client:

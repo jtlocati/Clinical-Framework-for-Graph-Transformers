@@ -70,11 +70,11 @@ def FullModel(var: str, splits: dict, seed: int, device: str = "cuda") -> tuple:
         ModelConfig = ClinGroups.TGTModelConfig()
         TrainConfigure = TrainConfig()
         #If CUDA is avalable then implement, while working localy leve device = "cpu"
-        device =  torch.device(device if torch.cuda.is_available() else "cpu")
+        #device =  torch.device(device if torch.cuda.is_available() else "cpu")
         device = "cpu"
 
         #Define Grpah Nodes to plot on all model types
-        x_train = Graph.PrepInput(splits["train"]["X"], splits["train"]["x"])
+        x_train = Graph.PrepInput(splits["train"]["X"], splits["train"]["X"])
         x_valid = Graph.PrepInput(splits["val"]["X"], splits["val"]["M"])
         x_test = Graph.PrepInput(splits["test"]["X"], splits["test"]["M"])
         y_train = splits["train"]['y']
