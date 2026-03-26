@@ -110,7 +110,7 @@ def FullModel(var: str, splits: dict, seed: int, device: str = "cuda") -> tuple:
         print(f"    pos_weight: raw={raw_pw:.2f}, capped={capped:.2f}")
 
         #optimise:    
-        optimizer = torch.optim.AdamW(model.parameters(), lr=TrainConfigure.lr, weight_decay=TrainConfigure.weight_decay)
+        optimizer = torch.optim.AdamW(model.parameters(), lr=TrainConfigure.Lr, weight_decay=TrainConfigure.WeightDecay)
         scheduler = Warmup(optimizer, TrainConfigure.warmup_epochs, TrainConfigure.epochs)
 
         #Train loop for all Graphical models: "Clinical", "Temporal", "Full combine model"
