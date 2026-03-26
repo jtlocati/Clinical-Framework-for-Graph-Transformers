@@ -7,7 +7,8 @@ from sklearn.metrics import roc_auc_score , average_precision_score
 import ClinGroups
 import Graph
 import Models
-from Task4.config import TrainConfig
+from ClinGroups import TrainConfig
+from torch.utils.data import DataLoader
 
 #simple DS that returns (node feature, labels) ((hours, features), (Mortality (1 or 0)))
 class GraphData(torch.utils.data.Dataset):
@@ -28,7 +29,7 @@ def Warmup(optimiser, warmup_epochs, total_epoch):
             return (epoch + 1) / warmup_epochs
         progress = (epoch - warmup_epochs) / max(total_epoch - warmup_epochs, 1)
         return .5 * (1 + math.cos(math.pi * progress))
-    return LearnLambda(optimiser, LearnLambda)
+    return torch.optim.lr_scheduler.LambdaLR(optimiser, lr_lambda=LearnLambda)
 
 #Optimiser: compute AUROC and AUPRC on loader
 #*
@@ -74,7 +75,7 @@ def FullModel(var: str, splits: dict, seed: int, device: str = "cuda") -> tuple:
         device = "cpu"
 
         #Define Grpah Nodes to plot on all model types
-        x_train = Graph.PrepInput(splits["train"]["X"], splits["train"]["X"])
+        x_train = Graph.PrepInput(splits["train"]["X"], splits["train"]["M"])
         x_valid = Graph.PrepInput(splits["val"]["X"], splits["val"]["M"])
         x_test = Graph.PrepInput(splits["test"]["X"], splits["test"]["M"])
         y_train = splits["train"]['y']
@@ -82,12 +83,12 @@ def FullModel(var: str, splits: dict, seed: int, device: str = "cuda") -> tuple:
         y_test = splits["test"]["y"]
 
         #load data from the GraphData function
-        TrainLoader = torch.utils.data(GraphData(x_train, y_train), batch_size = TrainConfig.batch, shuffle = True, num_workers=0, pin_memory = True )
-        ValidationLoader = torch.utils.data(GraphData(x_valid, y_valid), batch_size = TrainConfig.batch, shuffle = False, num_workers = 0, pin_mmory = True ) 
-        TestLoader = torch.utils.data(GraphData(x_test, y_test), batch_size = TrainConfig.batch, shuffle = False, num_workers = 0, pin_memory = True)
+        TrainLoader = DataLoader(GraphData(x_train, y_train), batch_size=TrainConfigure.batch, shuffle=True, num_workers=0, pin_memory=True)
+        ValidationLoader = DataLoader(GraphData(x_valid, y_valid), batch_size=TrainConfigure.batch, shuffle=False, num_workers=0, pin_memory=True) 
+        TestLoader = DataLoader(GraphData(x_test, y_test), batch_size=TrainConfigure.batch, shuffle=False, num_workers=0, pin_memory=True)
 
         #Build graph attention mask to share full all patients
-        adj = Graph.AdjType(var, ModelConfig)
+        adj = Graph.AdjType(var, ModelConfig.seq_len)
         attention_mask = Graph.ADJ2AtMask(adj).to(device)
 
         number_of_edges = adj.sum().item() - ModelConfig.seq_len
@@ -103,14 +104,14 @@ def FullModel(var: str, splits: dict, seed: int, device: str = "cuda") -> tuple:
 
         #Function to find loss given capped pos_weight
         raw_pw  = (y_train == 0).sum() / max((y_train == 1).sum(), 1)
-        capped  = min(float(raw_pw), TrainConfig.max_pos_weight)
+        capped  = min(float(raw_pw), TrainConfigure.max_pos_weight)
         pos_wt  = torch.tensor([capped], dtype=torch.float32, device=device)
         criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_wt)
         print(f"    pos_weight: raw={raw_pw:.2f}, capped={capped:.2f}")
 
         #optimise:    
-        optimizer = torch.optim(model.parameters(), lr=TrainConfig.Lr, weight_decay=TrainConfig.WeightDecay)
-        scheduler = Warmup(optimizer, TrainConfig.warmup_epochs, TrainConfig.epochs)
+        optimizer = torch.optim.AdamW(model.parameters(), lr=TrainConfigure.lr, weight_decay=TrainConfigure.weight_decay)
+        scheduler = Warmup(optimizer, TrainConfigure.warmup_epochs, TrainConfigure.epochs)
 
         #Train loop for all Graphical models: "Clinical", "Temporal", "Full combine model"
         #simplpe loop to repetily chack AUROC values and replace with new top value
@@ -120,9 +121,9 @@ def FullModel(var: str, splits: dict, seed: int, device: str = "cuda") -> tuple:
         Patience = 0
         log = {
             "epoch": [], "train_loss": [],
-        "val_auroc": [], "val_auprc": [], "Lr": [],
+            "val_auroc": [], "val_auprc": [], "lr": [],
         }
-        for epoch in range(1, TrainConfig.epochs + 1):
+        for epoch in range(1, TrainConfigure.epochs + 1):
         # train step
             model.train()
             losses = []
@@ -153,19 +154,19 @@ def FullModel(var: str, splits: dict, seed: int, device: str = "cuda") -> tuple:
                     f"val_auprc={val_m['auprc']:.4f}  lr={cur_lr:.6f}")
 
             # Stop early if needed or if patience runs out
-            if val_m["auroc"] > best_val_auroc:
-                best_val_auroc = val_m["auroc"]
-                best_state = {k: v.cpu().clone()
+            if val_m["auroc"] > TopAUROC:
+                TopAUROC = val_m["auroc"]
+                Best = {k: v.cpu().clone()
                             for k, v in model.state_dict().items()}
-                patience_ctr = 0
+                Patience  = 0
             else:
-                patience_ctr += 1
-                if patience_ctr >= TrainConfig.patience:
-                    print(f"    Early stop at epoch {epoch}:    (best val_auroc={best_val_auroc:.4f})")
+                Patience += 1
+                if Patience >= TrainConfigure.patience:
+                    print(f"    Early stop at epoch {epoch}:    (best val_auroc={TopAUROC:.4f})")
                     break
 
         # Restore the best recorded checkpoint 
-        model.load_state_dict(best_state)
+        model.load_state_dict(Best)
         model.to(device)
 
         # Final evaluation 

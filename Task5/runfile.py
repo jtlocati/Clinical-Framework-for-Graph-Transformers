@@ -8,12 +8,12 @@ import time
 import numpy
 import pandas
 import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as pyplot 
 from Task4 import DataPipeline
 import ClinGroups
 import Train
 
-matplotlib.use("Agg")
 #Grab attention for important results diuring training
 AG = "------"
 BAG = "==================================="
@@ -23,7 +23,7 @@ os.makedirs(RESULTS_DIRECTORY, exist_ok=True)
 
 #Format of two rows and three cols: row0=loss, row1= valAUROC
 def Convergence(Alogs: dict):
-    figure, axi = pyplot.subplot(2,3, figsize=(16,9))
+    figure, axi = pyplot.subplots(2,3, figsize=(16,9))
     figure.suptitle(f"{AG}Tempporal Graphical Transformer convergence{AG}", fontsize=14)
 
     for col, var in enumerate(ClinGroups.GRAPH_TYPES):
@@ -57,7 +57,7 @@ def Convergence(Alogs: dict):
 
 #important outputs & whatnot
 def main():
-    print(f"{AG}\nTEMPORAL GRAPH TRANSFORMER BENCHMARK\n{AG}")
+    print(f"{BAG}\nTEMPORAL GRAPH TRANSFORMER BENCHMARK\n{BAG}")
     print(f"{AG}Loading Cached Data...{AG}")
     RawX, M, y, ids = DataPipeline.run_pipeline()
     print(f"{BAG}\nCohort: {RawX.shape[0]:,} patients  | {RawX.shape[1]}h  |  {RawX.shape[2]} features\n{BAG}")
@@ -76,8 +76,8 @@ def main():
 
             result, log = Train.FullModel(var, splits, s)
 
-            TotTime = time.time - t0
-            print(f"{BAG} {var} DONE.{BAG}\n test AUROC:    {result["test"]["auroc"]:.4f}\nAUPRC:   {result["test"]["auprc"]:.4f}")
+            TotTime = time.time() - t0
+            print(f"{BAG} {var} DONE.{BAG}\n test AUROC:    {result['test']['auroc']:.4f}\nAUPRC:   {result['test']['auprc']:.4f}")
 
             Results.append({
                 "variant":    var,

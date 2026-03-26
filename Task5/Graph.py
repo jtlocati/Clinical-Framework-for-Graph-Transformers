@@ -25,8 +25,8 @@ def ClinicalAdj(seq_length = 48, TSkip: list = None) -> torch.BoolTensor:
     for K in TSkip:
         for T in range(seq_length):
             if T+K < seq_length:
-                adj[T, T+1] = True
-                adj[T+1, T] = True
+                adj[T, T+K] = True
+                adj[T+K, T] = True
     adj.fill_diagonal_(True)
     return adj
 
@@ -39,7 +39,7 @@ def FullAdj(seq_length = 48, TSkip: list = None):
 #Select Table varints as set in Task 5 config and link to corresponding builder function
 
 def AdjType(buildee, seq_length = 48) -> torch.BoolTensor:
-    builder = {"temporal_solo": TemporalAdj, "clinical_solo": ClinicalAdj, "full": FullAdj}
+    builder = {"temporal_only": TemporalAdj, "clinical_only": ClinicalAdj, "full_graph": FullAdj}
     if buildee not in builder:
         raise ValueError(f"{buildee} not valid for current builder types:\n{ClinGroups.GRAPH_TYPES}")
     
@@ -55,10 +55,10 @@ def ADJ2AtMask(adj: torch.BoolTensor):
 
 def PrepInput(X: numpy.ndarray, M: numpy.ndarray) -> numpy.ndarray:
     #Returns in (N, hours, features)
-    return numpy.concatenate([X, M], axis=1).astype(numpy.float32)
+    return numpy.concatenate([X, M], axis=-1).astype(numpy.float32)
 
 if __name__ == "__main__":
-    for name in ["temporal_solo", "clinical_solo", "full"]:
+    for name in ["temporal_only", "clinical_only", "full_graph"]:
         adj = AdjType(name, seq_length=48)
         NumEdges = adj.sum().item() - 48
         density = adj.float().mean().item()

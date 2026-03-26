@@ -48,10 +48,11 @@ class GraphTransformer(torch.nn.Module):
 
         self.dropout = torch.nn.Dropout(dropout)
 
-    def forwards(self, x: torch.Tensor, attnMSK: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, attnMSK: torch.Tensor) -> torch.Tensor:
         #Initalize the muliti-head attention with graph mask.
         # resid + x is the residual connection.
-        resid = x = self.norm1(x)
+        resid = x
+        x = self.norm1(x)
         x, _ = self.attn(x, x, x, attn_mask=attnMSK)
         x = self.dropout(x)
         x=resid + x
@@ -71,8 +72,8 @@ class TemporalGraph(torch.nn.Module):
     def __init__(self, config: ClinGroups.TGTModelConfig = None):
         config = config or ClinGroups.TGTModelConfig()
 
-        #Embed raw 50-dim featurs to Model:
-        self.embedding = torch.nn.Sequential(torch.nn.Linear(config.input_dim, config.d_model), torch.nn.LayerNorm(config.d_model), torch.nn.GELU(),torch.nn.Dropout(config.dropout),)
+        super().__init__()
+        self.embedding = torch.nn.Sequential(torch.nn.Linear(config.input_dim, config.d_model), torch.nn.LayerNorm(config.d_model), torch.nn.GELU(), torch.nn.Dropout(config.dropout))
 
         self.PositionalEncoder  = SinusoidalPE(config.d_model, max_length=config.seq_len)
 
@@ -83,8 +84,8 @@ class TemporalGraph(torch.nn.Module):
 
     def forward(self, x: torch.Tensor, attn_mask: torch.Tensor) -> torch.Tensor:
         x = self.embedding(x)
-        x = self.PositionalEncoder
-        for layer in self,self.layers:
+        x = self.PositionalEncoder(x)
+        for layer in self.layers:
             x=layer(x, attn_mask)
         
         #pool mean: patient_embedding -> mean(node_embedings) (batch, Model)
