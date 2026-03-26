@@ -1,0 +1,83 @@
+[
+  {
+    "variant": "temporal_only",
+    "seed": 42,
+    "test_auroc": 0.8172,
+    "test_auprc": 0.4328,
+    "val_auroc": 0.8397,
+    "val_auprc": 0.494,
+    "time_s": 1690.2
+  },
+  {
+    "variant": "clinical_only",
+    "seed": 42,
+    "test_auroc": 0.8235,
+    "test_auprc": 0.4406,
+    "val_auroc": 0.8397,
+    "val_auprc": 0.4957,
+    "time_s": 1146.5
+  },
+  {
+    "variant": "full_graph",
+    "seed": 42,
+    "test_auroc": 0.8175,
+    "test_auprc": 0.4308,
+    "val_auroc": 0.8392,
+    "val_auprc": 0.498,
+    "time_s": 983.1
+  },
+  {
+    "variant": "temporal_only",
+    "seed": 123,
+    "test_auroc": 0.8463,
+    "test_auprc": 0.5004,
+    "val_auroc": 0.8369,
+    "val_auprc": 0.4868,
+    "time_s": 4145.4
+  },
+  {
+    "variant": "clinical_only",
+    "seed": 123,
+    "test_auroc": 0.8449,
+    "test_auprc": 0.5015,
+    "val_auroc": 0.8307,
+    "val_auprc": 0.4805,
+    "time_s": 891.3
+  },
+  {
+    "variant": "full_graph",
+    "seed": 123,
+    "test_auroc": 0.8449,
+    "test_auprc": 0.5011,
+    "val_auroc": 0.8305,
+    "val_auprc": 0.4805,
+    "time_s": 931.7
+  },
+  {
+    "variant": "temporal_only",
+    "seed": 2024,
+    "test_auroc": 0.8282,
+    "test_auprc": 0.4713,
+    "val_auroc": 0.8299,
+    "val_auprc": 0.472,
+    "time_s": 1328.2
+  },
+  {
+    "variant": "clinical_only",
+    "seed": 2024,
+    "test_auroc": 0.8274,
+    "test_auprc": 0.4787,
+    "val_auroc": 0.8313,
+    "val_auprc": 0.4821,
+    "time_s": 1989.7
+  },
+  {
+    "variant": "full_graph",
+    "seed": 2024,
+    "test_auroc": 0.8275,
+    "test_auprc": 0.4805,
+    "val_auroc": 0.8315,
+    "val_auprc": 0.4815,
+    "time_s": 1223.6
+  }
+]
