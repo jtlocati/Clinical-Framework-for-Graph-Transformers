@@ -79,7 +79,46 @@ def ThreshTune(y_true: numpy.ndarray, y_prob: numpy.ndarray, masks: dict) -> pan
             print(f"{config.AG}TPR GAP BEFORE: {TPRgapBefore:.4f}{config.AG}\n{config.AG}TPR GAP AFTER: {TPRgapPost}{config.AG}\n{config.BAG} REDUCTION: {TPRgapBefore - TPRgapPost}{config.BAG}")
 
         return datafram
-    
-    
+
+#intervention numero dos: Platt recalibration: Fit a logistic regression (Platt scaling) per subgroup to recalibrate probabilities, then re-measure AUROC / AUPRC.
+def PlattRecal(y_true: numpy.ndarray, y_prob: numpy.ndarray, masks:dict) -> pandas.DataFrame:
+    rows = []
+    for subgroup, mask in masks.items():
+        ms = mask.sum()
+        if ms < config.MinGroup:
+            continue
+        sub_t = y_true[mask]
+        sub_p = y_prob[mask]
+        if len(set(sub_t)) < 2:
+            continue
 
 
+        OGAUROC = roc_auc_score(sub_t, sub_p)
+        OGAUPRC = average_precision_score(sub_t, sub_p)
+
+        #Scale Platt baised off of og values
+        TrackOdds = numpy.log(sub_p / (1-sub_p+1e-8)).reshape(-1, 1)
+        Platt = LogisticRegression(solver="lbfgs", max_iter=200)
+        Platt.fit(TrackOdds, sub_t)
+        RecallPlatt = Platt.predict_proba(TrackOdds)[:, 1]
+
+        rocRecall = roc_auc_score(sub_t, RecallPlatt)
+        prcRecall = average_precision_score(sub_t, RecallPlatt)
+
+        rows.append({
+            "subgroup":     subgroup,
+            "n":            int(ms),
+            "orig_auroc":   round(OGAUROC, 4),
+            "recal_auroc":  round(rocRecall, 4),
+            "orig_auprc":   round(OGAUPRC, 4),
+            "recal_auprc":  round(prcRecall, 4),
+        })
+        return pandas.DataFrame(rows)
+
+def ExecuteInterns(model: str, y_true: numpy.ndarray, y_prob:numpy.ndarray, masks: dict) -> dict:
+    print(f"{config.BAG}\nIntervention on: {model}\n{config.BAG}")
+    print(f"{config.AG}Running Per subgroup threshold tuneing..{config.AG}")
+    ThreshCal = ThreshTune(y_true, y_prob, masks)
+    print(f"{config.AG}Running Per subgroup Platt recalibratio..{config.AG}")
+    Platt = PlattRecal(y_true, y_prob, masks)
+    return{"threshold_tuning": ThreshCal, "platt_recalibration": Platt}
