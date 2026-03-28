@@ -117,7 +117,7 @@ def main():
     print(summary[["Variant", "AUROC", "AUPRC"]].to_string(index=False))
 
 
-    #ALL OF THE FOLLOWING WILL SAVE TO 'Task5\{specifyed path}'
+    #ALL OF THE FOLLOWING WILL SAVE TO 'Task5\RESULTDIR'
     # Saves per-run 
     csv_path = os.path.join(RESULTS_DIRECTORY, "T5_all_runs.csv")
     df.to_csv(csv_path, index=False)
@@ -128,7 +128,6 @@ def main():
     summary.to_csv(sum_path, index=False)
     print(f"  Summary CSV -> {sum_path}")
 
-    # JSON (machine-readable)
     json_path = os.path.join(RESULTS_DIRECTORY, "T5_all_runs.json")
     with open(json_path, "w") as f:
         json.dump(Results, f, indent=2)
