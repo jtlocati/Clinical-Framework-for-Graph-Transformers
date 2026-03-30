@@ -56,4 +56,39 @@ def SubgroupBar(metrics: pandas.DataFrame, attrobute:str, save: str = config.RES
     if len(sub) == 0:
         print(f"NO DATA FOR {attrobute}")
         return
-     
+    subgroups = sorted(sub["subgroups"] == attrobute)
+    models = [m for m in config.BASELINE_MODELS if m in sub["model"].unique()]
+    NumberGroups = len(subgroups)
+    NumberModels = len(models)
+
+    X = numpy.arange(NumberGroups)
+
+    figure, ax = matplotlib.pyplot.subplots(figsize=(max(8, NumberGroups*2), 6))
+
+    for i, model in enumerate(models):
+        values = []
+        for group in subgroups:
+            row = sub[(sub["model"] == model) & sub["subgroup"] == group]
+            if len(row):
+                values.append(row["auroc"].values[0])
+            else:
+                values.append(0)
+        offset = (i - NumberModels / 2 + 0.5) * (.8/ NumberModels)
+        bars = ax.bar(offset, values, (.8/ NumberModels), label=model, alpha=.85)
+
+        ax.set_xlabel("Subgroup", fontsize=12)
+        ax.set_ylabel("AUROC", fontsize=12)
+        ax.set_title(f"Subgroup AUROC — {attrobute.title()}", fontsize=13)
+        ax.set_xticks(X)
+        ax.set_xticklabels(subgroups, fontsize=10)
+        ax.legend(fontsize=8, loc="lower right")
+        ax.set_ylim(0.5, 1.0)
+        ax.grid(axis="y", alpha=0.3)
+
+        matplotlib.pyplot.tight_layout()
+        SavePath = os.path.join(save, f"T6_Bar{attrobute}.png")
+        matplotlib.pyplot.savefig(SavePath, dpi=150)
+        matplotlib.pyplot.close()
+        print(f"{attrobute} BAR GRAPH SAVED -> {SavePath}")
+
+
