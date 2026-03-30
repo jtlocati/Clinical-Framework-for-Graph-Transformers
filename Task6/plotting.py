@@ -9,10 +9,6 @@ import config
 import pandas
 
 def Heatmap(gap: pandas.DataFrame, save: str = None):
-    if save is not None:
-        DIRECTORY = save
-    else:
-        DIRECTORY = config.RESULTS_DIRECTORY
     
     pivot = gap.pivot(index="model", columns="attrobute", values="auroc_gap")
 
@@ -45,12 +41,12 @@ def Heatmap(gap: pandas.DataFrame, save: str = None):
             aux.set_title("AUROC FAIRNESS GAP HM", fontsize=13, pad=12)
 
             matplotlib.pyplot.tight_layout()
-            path = os.path.join(DIRECTORY, "T6_farnessHM.png")
+            path = os.path.join(save, "T6_farnessHM.png")
             matplotlib.pyplot.close()
             print(f"HEATMAP SAVED -> {path}")
 
 
-def SubgroupBar(metrics: pandas.DataFrame, attrobute:str, save: str = config.RESULTS_DIRECTORY):
+def SubgroupBar(metrics: pandas.DataFrame, attrobute:str, save: str = None):
     sub = metrics[(metrics["attribute"] == attrobute & metrics["auroc"].notna)].copy()
 
     if len(sub) == 0:
@@ -91,4 +87,51 @@ def SubgroupBar(metrics: pandas.DataFrame, attrobute:str, save: str = config.RES
         matplotlib.pyplot.close()
         print(f"{attrobute} BAR GRAPH SAVED -> {SavePath}")
 
+#Gap comparison
 
+def gap_comparison(gap: pandas.DataFrame, save:str=None):
+    #fix ts
+
+    attrobutes = sorted(gap["attrobute"].unique())
+    models = [m for m in config.BASELINE_MODELS if m in gap["model"].unique()]
+
+    x = numpy.arange(len(attrobutes))
+
+    figure, ax = matplotlib.pyplot.subplots(figsize = (max, len(attrobutes) * 3, 6))
+
+    for i, model in enumerate(models):
+        values = []
+        for attrobute in attrobutes:
+            row = gap[gap["model"] == model] & (gap["attrobute"] == attrobute)
+            if len(row):
+                values.append(row["auroc_gap"].values[0])
+            else:
+                values.append(0)
+            offset = (i - len(models) / 2 + 0.5) * .8 / len(models)
+            ax.bar(x+offset, values, (.8/len(models)), label=model, alpha=.8)
+    ax.set_xlabel("Demographic Attribute", fontsize=12)
+    ax.set_ylabel("AUROC Gap (max − min)", fontsize=13)
+    ax.set_title("Fairness Gap Comparison Across Models", fontsize=13)
+    ax.set_xticks(x)
+    ax.set_xticklabels(attrobutes, fontsize=11)
+    ax.legend(fontsize=8, bbox_to_anchor=(1.02, 1), loc="upper left")
+    ax.grid(axis="y", alpha=0.3)
+
+    matplotlib.pyplot.tight_layout()
+    path = os.path.join(save, "T6_GAP_COMPARISON.png")
+    matplotlib.pyplot.savefig(path, dpi=150)
+    matplotlib.pyplot.close()
+    print(f"GAP COMPARISON SAVED TO -> {path}")
+
+#run all graph functions at once when called:
+def AllPlot(metrics: pandas.DataFrame, gap: pandas.DataFrame, save_dir:str=None):
+    if save_dir is None:
+        path = config.RESULTS_DIRECTORY
+    else:
+        path = save_dir
+    
+    print(f"{config.BAG}RUNNING PLOT GENERATION")
+    Heatmap(gap, path)
+    gap_comparison(gap, path)
+    for attrobute in config.SUBGROUP_COLS:
+        SubgroupBar(metrics, attrobute, path )
