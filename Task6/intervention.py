@@ -49,6 +49,7 @@ def ThreshTune(y_true: numpy.ndarray, y_prob: numpy.ndarray, masks: dict) -> pan
             GlobalPreds = 1
         else:
             GlobalPreds = 0
+
         TPRglobal = GlobalPreds[sub_t==1].mean() if (sub_t == 1).sub > 0 else 0
 
         TunedPreds = (sub_p >= SubgOpThresh).astype(int)
