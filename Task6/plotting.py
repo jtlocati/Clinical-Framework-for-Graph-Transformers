@@ -5,7 +5,7 @@ import numpy
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot
-import config
+import Task6.config as config
 import pandas
 
 def Heatmap(gap: pandas.DataFrame, save: str = None):
@@ -110,7 +110,7 @@ def gap_comparison(gap: pandas.DataFrame, save:str=None):
             offset = (i - len(models) / 2 + 0.5) * .8 / len(models)
             ax.bar(x+offset, values, (.8/len(models)), label=model, alpha=.8)
     ax.set_xlabel("Demographic Attribute", fontsize=12)
-    ax.set_ylabel("AUROC Gap (max − min)", fontsize=13)
+    ax.set_ylabel("AUROC Gap (max - min)", fontsize=13)
     ax.set_title("Fairness Gap Comparison Across Models", fontsize=13)
     ax.set_xticks(x)
     ax.set_xticklabels(attrobutes, fontsize=11)

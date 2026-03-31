@@ -18,7 +18,7 @@ import numpy
 import torch
 import torch.nn as nn
 import torch.nn.functional as F 
-import config
+import Task4.config as config 
 
 #Shared Positional Encoding
 

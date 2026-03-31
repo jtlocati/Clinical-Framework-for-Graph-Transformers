@@ -2,16 +2,11 @@ import numpy
 import torch
 from torch.utils.data import Dataset, DataLoader
 
-import config as cfg
+import Task4.config as config
 
 
 class SeqDataset(Dataset):
-    """   
-    Returns (x, mask, y) where:
-      x    : (T, F) float tensor — normalised, forward filled features
-      mask : (T, F) float tensor — 1 = observed, 0 = missing
-      y    : scalar long tensor   — mortality label
-    """
+
 
     def __init__(self, X: numpy.ndarray, M: numpy.ndarray, y: numpy.ndarray):
         self.X = torch.from_numpy(X).float() # (N, T, F)
@@ -28,12 +23,6 @@ class SeqDataset(Dataset):
 class FlatDataset:
 
     def __init__(self, X: numpy.ndarray, M: numpy.ndarray, y: numpy.ndarray):
-        """
-        Parameters:
-        X : (N, T, F) normalised, forward filled
-        M : (N, T, F) original missingness mask
-        y : (N,)
-        """
         self.y = y
         self.X_flat = self._summarise(X, M)
 
@@ -60,9 +49,9 @@ class FlatDataset:
 def make_seq_loaders(splits: dict, batch_size: int = None,
                      num_workers: int = 0) -> dict:
     
-    #Convenience: turns split dict → DataLoader dict.
+    #Convenience: turns split dict -> DataLoader dict.
 
-    bs = batch_size or cfg.TrainConfig.batch
+    bs = batch_size or config.TrainConfig.batch
     loaders = {}
     for name in ["train", "val", "test"]:
         ds = SeqDataset(splits[name]["X"], splits[name]["M"], splits[name]["y"])

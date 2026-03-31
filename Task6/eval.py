@@ -2,7 +2,7 @@ import numpy
 import pandas
 from google.cloud import bigquery
 from sklearn.metrics import roc_auc_score, average_precision_score
-import config
+import Task6.config as config
 import os
 
 def load_demographics() -> pandas.DataFrame:

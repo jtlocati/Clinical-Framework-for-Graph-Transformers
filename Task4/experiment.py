@@ -7,22 +7,22 @@ Handles:
 """
 
 import time
-import numpy as np
+import numpy
 import torch
-import torch.nn as nn
+import torch
 from torch.optim import AdamW
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score, average_precision_score
 import lightgbm as lgb
 import math
 
-import config
-from models import get_model, PretrainedTST, PretrainedTSTEncoder, PretrainedTSTForPretraining
-from dataset import  make_seq_loaders, make_flat_data
+import Task4.config as config
+from Task4.models import get_model, PretrainedTST, PretrainedTSTEncoder, PretrainedTSTForPretraining
+from Task4.dataset import  make_seq_loaders, make_flat_data
 from torch.optim.lr_scheduler import LambdaLR
 
 #metrics
-def compute_metrics(y_true: np.array, y_prob: np.ndarray) -> dict:
+def compute_metrics(y_true: numpy.array, y_prob: numpy.ndarray) -> dict:
     #Return AUROC and AUPRC
     return{"auroc": roc_auc_score(y_true, y_prob), "auprc": average_precision_score(y_true, y_prob),}
 
@@ -86,7 +86,7 @@ def _get_warmup_cosine_scheduler(optimizer, warmup_epochs, total_epochs):
     return LambdaLR(optimizer, lr_lambda)
 
 
-def train_neural(model: nn.Module, loaders: dict, tc: config.TrainConfig = None, device: str = "cuda") -> dict:
+def train_neural(model: torch.nn.Module, loaders: dict, tc: config.TrainConfig = None, device: str = "cuda") -> dict:
     """
     Standard training loop with:
       - Binary loss
@@ -103,7 +103,7 @@ def train_neural(model: nn.Module, loaders: dict, tc: config.TrainConfig = None,
     capped_pw = min(raw_pw, tc.max_pos_weight)
     pos_weight = torch.tensor([capped_pw], dtype=torch.float32, device=device)
     print(f"    pos_weight: raw={raw_pw:.2f}, capped={capped_pw:.2f}")
-    criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+    criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
     # optimizer + warmup‑cosine scheduler
     optimizer = AdamW(model.parameters(), lr=tc.Lr, weight_decay=tc.WeightDecay)
@@ -123,7 +123,7 @@ def train_neural(model: nn.Module, loaders: dict, tc: config.TrainConfig = None,
             loss = criterion(logits, y)
             optimizer.zero_grad()
             loss.backward()
-            nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
             losses.append(loss.item())
         scheduler.step()
@@ -134,7 +134,7 @@ def train_neural(model: nn.Module, loaders: dict, tc: config.TrainConfig = None,
 
         cur_lr = optimizer.param_groups[0]["lr"]
         if epoch % 5 == 0 or epoch == 1:
-            print(f"    Epoch {epoch:3d}  loss={np.mean(losses):.4f}  "
+            print(f"    Epoch {epoch:3d}  loss={numpy.mean(losses):.4f}  "
                   f"val_auroc={val_auroc:.4f}  val_auprc={val_metrics['auprc']:.4f}  "
                   f"lr={cur_lr:.6f}")
 
@@ -157,7 +157,7 @@ def train_neural(model: nn.Module, loaders: dict, tc: config.TrainConfig = None,
     return {"val": val_m, "test": test_m}
 
 
-def evaluate_neural(model: nn.Module, loader, device) -> dict:
+def evaluate_neural(model: torch.nn.Module, loader, device) -> dict:
     model.eval()
     all_y, all_p = [], []
     with torch.no_grad():
@@ -167,8 +167,8 @@ def evaluate_neural(model: nn.Module, loader, device) -> dict:
             probs = torch.sigmoid(logits).cpu().numpy()
             all_y.append(y.numpy())
             all_p.append(probs)
-    y_true = np.concatenate(all_y)
-    y_prob = np.concatenate(all_p)
+    y_true = numpy.concatenate(all_y)
+    y_prob = numpy.concatenate(all_p)
     return compute_metrics(y_true, y_prob)
 
 
@@ -196,11 +196,11 @@ def train_pretrained_tst(pretrain_model: PretrainedTSTForPretraining,
             loss = pretrain_model(x, m)
             optimizer.zero_grad()
             loss.backward()
-            nn.utils.clip_grad_norm_(pretrain_model.parameters(), 1.0)
+            torch.nn.utils.clip_grad_norm_(pretrain_model.parameters(), 1.0)
             optimizer.step()
             losses.append(loss.item())
         if epoch % 10 == 0 or epoch == 1:
-            print(f"      Pretrain epoch {epoch:3d}  recon_loss={np.mean(losses):.4f}")
+            print(f"      Pretrain epoch {epoch:3d}  recon_loss={numpy.mean(losses):.4f}")
 
     #  Phase 2: fine‑tune 
     print("    Phase 2: Fine‑tuning for classification …")

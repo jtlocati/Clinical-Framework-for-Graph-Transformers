@@ -4,10 +4,10 @@ import math
 import numpy
 import torch
 from sklearn.metrics import roc_auc_score , average_precision_score
-import ClinGroups
-import Graph
-import Models
-from ClinGroups import TrainConfig
+import Task5.ClinGroups as ClinGroups
+import Task5.Graph as Graph
+import Task5.Models as Models
+from Task5.ClinGroups import TrainConfig
 from torch.utils.data import DataLoader
 
 #simple DS that returns (node feature, labels) ((hours, features), (Mortality (1 or 0)))
@@ -50,22 +50,7 @@ def Optimiser(model, loader, attention_mask, device):
         "auroc": roc_auc_score(YTrue, PTrue),
         "auprc": average_precision_score(YTrue, PTrue)
     }
-        
-"""
-    Train one Temporal Graph Transformer variant on one seed.
-
-    Parameters
-    ----------
-    variant : "temporal_only" | "clinical_only" | "full_graph"
-    splits  : dict from data_pipeline.prepare_for_seed()
-    seed    : random seed for reproducibility
-    device  : "cuda" or "cpu"
-
-    Returns
-    -------
-    result  : dict with "val" and "test" sub-dicts (each has auroc, auprc)
-    log     : dict with per-epoch training history (for convergence plots)
-"""       
+               
 
 def FullModel(var: str, splits: dict, seed: int, device: str = "cuda") -> tuple:
         ModelConfig = ClinGroups.TGTModelConfig()

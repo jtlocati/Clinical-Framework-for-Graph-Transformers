@@ -7,7 +7,7 @@ Ovgerview:
 
 import math
 import torch
-import ClinGroups
+import Task5.ClinGroups as ClinGroups
 
 #This class initalizes Standard sinsodal positional encoding. Adding time-step information to each node so edges can be drawn in Graph.py Temporal Agacent
 #(sets up connection for same mimic stay_id nodes through time)
@@ -97,7 +97,7 @@ class TemporalGraph(torch.nn.Module):
 if __name__ == "__main__":
     model = TemporalGraph()
     ParameterNumber = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    print(f"TemporalGraphTransformer  — {ParameterNumber:,} trainable parameters")
+    print(f"TemporalGraphTransformer  - {ParameterNumber:,} trainable parameters")
     # Dummy forward pass
     x = torch.randn(4, 48, 50)
     mask = torch.zeros(48, 48)

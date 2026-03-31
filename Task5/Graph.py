@@ -1,7 +1,7 @@
 #Build graph that masks for all graph varients (temporal, clinical, and full)
 import torch
 import numpy
-import ClinGroups
+import Task5.ClinGroups
 
 #Adjacency builders:
 #TemporalAdj -> Chain graph (each node connects to neighbor bidirectionaly) + self-loops for slef attention
@@ -41,7 +41,7 @@ def FullAdj(seq_length = 48, TSkip: list = None):
 def AdjType(buildee, seq_length = 48) -> torch.BoolTensor:
     builder = {"temporal_only": TemporalAdj, "clinical_only": ClinicalAdj, "full_graph": FullAdj}
     if buildee not in builder:
-        raise ValueError(f"{buildee} not valid for current builder types:\n{ClinGroups.GRAPH_TYPES}")
+        raise ValueError(f"{buildee} not valid for current builder types:\n{Task5.ClinGroups.GRAPH_TYPES}")
     
     return builder[buildee](seq_length)
 

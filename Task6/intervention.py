@@ -3,7 +3,7 @@ import numpy
 import pandas
 from sklearn.metrics import roc_auc_score, average_precision_score, f1_score, precision_recall_curve
 from sklearn.linear_model import LogisticRegression
-import config
+import Task6.config as config
 
 def FindBestModel(metrics: pandas.DataFrame) -> dict:
     overall =  metrics[metrics["model"] == "overall"].copy()
