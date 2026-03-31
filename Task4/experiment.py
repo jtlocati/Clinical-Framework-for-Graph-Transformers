@@ -186,7 +186,7 @@ def train_pretrained_tst(pretrain_model: PretrainedTSTForPretraining,
     pretrain_model = pretrain_model.to(device)
 
     #  Phase 1: pretrain 
-    print("    Phase 1: Selfsupervised pretraining …")
+    print("Phase 1: Selfsupervised pretraining …")
     optimizer = AdamW(pretrain_model.parameters(), lr=pc.pretrain_lr)
     for epoch in range(1, pc.pretrain_epochs + 1):
         pretrain_model.train()
@@ -203,7 +203,7 @@ def train_pretrained_tst(pretrain_model: PretrainedTSTForPretraining,
             print(f"      Pretrain epoch {epoch:3d}  recon_loss={numpy.mean(losses):.4f}")
 
     #  Phase 2: fine‑tune 
-    print("    Phase 2: Fine‑tuning for classification …")
+    print("Phase 2: Fine tuning for classification …")
     encoder = pretrain_model.encoder #extract pretrained encoder
     ft_model = PretrainedTST(encoder, pc).to(device)
 
@@ -250,7 +250,72 @@ def run_single(model_name: str, splits: dict, seed: int, device: str = "cuda") -
         result = train_neural(model, loaders, device=device)
 
     elapsed = time.time() - t0
-    print(f"    ✅ Done in {elapsed:.1f}s  |  "
+    print(f"✅ Done in {elapsed:.1f}s  |  "
           f"test AUROC={result['test']['auroc']:.4f}  "
           f"AUPRC={result['test']['auprc']:.4f}")
-    return result
+    return result 
+    #return {"val": {}, "test": result}, y_true -> Check result format -> fornow hardcode and see where it goes \_(-_-)_/
+
+def RunSingleWithPred(model_name: str, splits: dict, seed: int, device: str = "cuda") -> tuple:
+    print(f"\n  ▶ {model_name}  (seed={seed})")
+    t0 = time.time()
+    dev = torch.device(device if torch.cuda.is_available() else "cpu")
+
+    if model_name == "LogisticRegression":
+        flat = make_flat_data(splits)
+        X_tr, y_tr = flat["train"].as_arrays()
+        X_te, y_te = flat["test"].as_arrays()
+        mdl = LogisticRegression(max_iter=2000, C=1.0, solver="lbfgs", random_state=seed)
+        mdl.fit(X_tr, y_tr)
+        y_prob = mdl.predict_proba(X_te)[:, 1]
+        y_true = y_te
+
+    elif model_name == "LightGBM":
+        flat = make_flat_data(splits)
+        X_tr, y_tr = flat["train"].as_arrays()
+        X_val, y_val = flat["val"].as_arrays()
+        X_te, y_te = flat["test"].as_arrays()
+        params = {**config.LGBM_PARAMS, "seed": seed}
+        dtrain = lgb.Dataset(X_tr, label=y_tr)
+        dval = lgb.Dataset(X_val, label=y_val, reference=dtrain)
+        callbacks = [lgb.early_stopping(stopping_rounds=config.LGBM_EARLY_STOP),
+                     lgb.log_evaluation(period=200)]
+        mdl = lgb.train(params, dtrain, num_boost_round=config.LGBM_ROUNDS,
+                        valid_sets=[dval], valid_names=["val"], callbacks=callbacks)
+        y_prob = mdl.predict(X_te)
+        y_true = y_te
+
+    elif model_name == "PretrainedTST":
+        loaders = make_seq_loaders(splits, num_workers=0)
+        pretrain_model, _ = get_model("PretrainedTST", device=dev)
+        # reuse train_pretrained_tst but we need predictions after
+        result = train_pretrained_tst(pretrain_model, loaders, device)
+
+        pc = config.PretrainedTSTConfig()
+        pretrain_model2, _ = get_model("PretrainedTST", device=dev)
+        pretrain_model2 = pretrain_model2.to(dev)
+        opt = AdamW(pretrain_model2.parameters(), lr=pc.pretrain_lr)
+        for ep in range(1, pc.pretrain_epochs + 1):
+            pretrain_model2.train()
+            for x, m, _ in loaders["train"]:
+                x, m = x.to(dev), m.to(dev)
+                loss = pretrain_model2(x, m)
+                opt.zero_grad(); loss.backward()
+                torch.nn.utils.clip_grad_norm_(pretrain_model2.parameters(), 1.0)
+                opt.step()
+        encoder = pretrain_model2.encoder
+        ft_model = PretrainedTST(encoder, pc).to(dev)
+        train_neural(ft_model, loaders, device=device)
+        y_true, y_prob = evaluate_neural(ft_model, loaders["test"], dev)
+
+    else:
+        loaders = make_seq_loaders(splits, num_workers=0)
+        model, _ = get_model(model_name, device=dev)
+        train_neural(model, loaders, device=device)
+        y_true, y_prob = evaluate_neural(model, loaders["test"], dev)
+
+    metrics = compute_metrics(y_true, y_prob)
+    elapsed = time.time() - t0
+    print(f" ✅ Done in {elapsed:.1f}s  |  "
+          f"test AUROC={metrics['auroc']:.4f}  AUPRC={metrics['auprc']:.4f}")
+    return {"val": {}, "test": metrics}, y_true, y_prob
