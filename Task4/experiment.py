@@ -186,12 +186,12 @@ def train_pretrained_tst(pretrain_model: PretrainedTSTForPretraining,
     pretrain_model = pretrain_model.to(device)
 
     #  Phase 1: pretrain 
-    print("Phase 1: Selfsupervised pretraining …")
+    print("    Phase 1: Selfsupervised pretraining …")
     optimizer = AdamW(pretrain_model.parameters(), lr=pc.pretrain_lr)
     for epoch in range(1, pc.pretrain_epochs + 1):
         pretrain_model.train()
         losses = []
-        for x, m, _ in loaders["train"]:
+        for _, x, m, _ in loaders["train"]:
             x, m = x.to(device), m.to(device)
             loss = pretrain_model(x, m)
             optimizer.zero_grad()
@@ -203,8 +203,8 @@ def train_pretrained_tst(pretrain_model: PretrainedTSTForPretraining,
             print(f"      Pretrain epoch {epoch:3d}  recon_loss={numpy.mean(losses):.4f}")
 
     #  Phase 2: fine‑tune 
-    print("Phase 2: Fine tuning for classification …")
-    encoder = pretrain_model.encoder #extract pretrained encoder
+    print("    Phase 2: Fine-tuning for classification …")
+    encoder = pretrain_model.encoder  # extract pretrained encoder
     ft_model = PretrainedTST(encoder, pc).to(device)
 
     return train_neural(ft_model, loaders, device=str(device))
@@ -297,7 +297,7 @@ def RunSingleWithPred(model_name: str, splits: dict, seed: int, device: str = "c
         opt = AdamW(pretrain_model2.parameters(), lr=pc.pretrain_lr)
         for ep in range(1, pc.pretrain_epochs + 1):
             pretrain_model2.train()
-            for x, m, _ in loaders["train"]:
+            for _, x, m, _ in loaders["train"]:
                 x, m = x.to(dev), m.to(dev)
                 loss = pretrain_model2(x, m)
                 opt.zero_grad(); loss.backward()
