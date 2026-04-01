@@ -9,7 +9,6 @@ Handles:
 import time
 import numpy
 import torch
-import torch
 from torch.optim import AdamW
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score, average_precision_score
@@ -105,7 +104,7 @@ def train_neural(model: torch.nn.Module, loaders: dict, tc: config.TrainConfig =
     print(f"    pos_weight: raw={raw_pw:.2f}, capped={capped_pw:.2f}")
     criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
-    # optimizer + warmup‑cosine scheduler
+    # optimizer + warmup-cosine scheduler
     optimizer = AdamW(model.parameters(), lr=tc.Lr, weight_decay=tc.WeightDecay)
     scheduler = _get_warmup_cosine_scheduler(optimizer, tc.warmup_epochs, tc.epochs)
 
@@ -117,7 +116,7 @@ def train_neural(model: torch.nn.Module, loaders: dict, tc: config.TrainConfig =
         # train
         model.train()
         losses = []
-        for x, m, y in loaders["train"]:
+        for _, x, m, y in loaders["train"]:
             x, m, y = x.to(device), m.to(device), y.float().to(device)
             logits = model(x, m)
             loss = criterion(logits, y)
@@ -161,7 +160,7 @@ def evaluate_neural(model: torch.nn.Module, loader, device) -> dict:
     model.eval()
     all_y, all_p = [], []
     with torch.no_grad():
-        for x, m, y in loader:
+        for _, x, m, y in loader:
             x, m = x.to(device), m.to(device)
             logits = model(x, m)
             probs = torch.sigmoid(logits).cpu().numpy()
@@ -172,20 +171,20 @@ def evaluate_neural(model: torch.nn.Module, loader, device) -> dict:
     return compute_metrics(y_true, y_prob)
 
 
-#  PretrainedTST two‑phase training
+#  PretrainedTST two-phase training
 
 
 def train_pretrained_tst(pretrain_model: PretrainedTSTForPretraining,
                          loaders: dict, device: str = "cuda") -> dict:
     """
-    Phase 1: SelFsupervised masked reconstruction pretraining
+    Phase 1: Selfsupervised masked reconstruction pretraining
     Phase 2: Finetune encoder + classification head
     """
     pc = config.PretrainedTSTConfig()
     device = torch.device(device if torch.cuda.is_available() else "cpu")
     pretrain_model = pretrain_model.to(device)
 
-    #  Phase 1: pretrain 
+    #  Phase 1: pretrain
     print("    Phase 1: Selfsupervised pretraining …")
     optimizer = AdamW(pretrain_model.parameters(), lr=pc.pretrain_lr)
     for epoch in range(1, pc.pretrain_epochs + 1):
@@ -202,7 +201,7 @@ def train_pretrained_tst(pretrain_model: PretrainedTSTForPretraining,
         if epoch % 10 == 0 or epoch == 1:
             print(f"      Pretrain epoch {epoch:3d}  recon_loss={numpy.mean(losses):.4f}")
 
-    #  Phase 2: fine‑tune 
+    #  Phase 2: fine-tune
     print("    Phase 2: Fine-tuning for classification …")
     encoder = pretrain_model.encoder  # extract pretrained encoder
     ft_model = PretrainedTST(encoder, pc).to(device)
@@ -261,6 +260,20 @@ def RunSingleWithPred(model_name: str, splits: dict, seed: int, device: str = "c
     t0 = time.time()
     dev = torch.device(device if torch.cuda.is_available() else "cpu")
 
+    def collect_neural_predictions(model, loader, device):
+        model.eval()
+        all_y, all_p = [], []
+        with torch.no_grad():
+            for _, x, m, y in loader:
+                x, m = x.to(device), m.to(device)
+                logits = model(x, m)
+                probs = torch.sigmoid(logits).cpu().numpy()
+                all_y.append(y.numpy())
+                all_p.append(probs)
+        y_true = numpy.concatenate(all_y)
+        y_prob = numpy.concatenate(all_p)
+        return y_true, y_prob
+
     if model_name == "LogisticRegression":
         flat = make_flat_data(splits)
         X_tr, y_tr = flat["train"].as_arrays()
@@ -278,18 +291,25 @@ def RunSingleWithPred(model_name: str, splits: dict, seed: int, device: str = "c
         params = {**config.LGBM_PARAMS, "seed": seed}
         dtrain = lgb.Dataset(X_tr, label=y_tr)
         dval = lgb.Dataset(X_val, label=y_val, reference=dtrain)
-        callbacks = [lgb.early_stopping(stopping_rounds=config.LGBM_EARLY_STOP),
-                     lgb.log_evaluation(period=200)]
-        mdl = lgb.train(params, dtrain, num_boost_round=config.LGBM_ROUNDS,
-                        valid_sets=[dval], valid_names=["val"], callbacks=callbacks)
+        callbacks = [
+            lgb.early_stopping(stopping_rounds=config.LGBM_EARLY_STOP),
+            lgb.log_evaluation(period=200),
+        ]
+        mdl = lgb.train(
+            params,
+            dtrain,
+            num_boost_round=config.LGBM_ROUNDS,
+            valid_sets=[dval],
+            valid_names=["val"],
+            callbacks=callbacks,
+        )
         y_prob = mdl.predict(X_te)
         y_true = y_te
 
     elif model_name == "PretrainedTST":
         loaders = make_seq_loaders(splits, num_workers=0)
         pretrain_model, _ = get_model("PretrainedTST", device=dev)
-        # reuse train_pretrained_tst but we need predictions after
-        result = train_pretrained_tst(pretrain_model, loaders, device)
+        train_pretrained_tst(pretrain_model, loaders, device)
 
         pc = config.PretrainedTSTConfig()
         pretrain_model2, _ = get_model("PretrainedTST", device=dev)
@@ -300,19 +320,20 @@ def RunSingleWithPred(model_name: str, splits: dict, seed: int, device: str = "c
             for _, x, m, _ in loaders["train"]:
                 x, m = x.to(dev), m.to(dev)
                 loss = pretrain_model2(x, m)
-                opt.zero_grad(); loss.backward()
+                opt.zero_grad()
+                loss.backward()
                 torch.nn.utils.clip_grad_norm_(pretrain_model2.parameters(), 1.0)
                 opt.step()
         encoder = pretrain_model2.encoder
         ft_model = PretrainedTST(encoder, pc).to(dev)
         train_neural(ft_model, loaders, device=device)
-        y_true, y_prob = evaluate_neural(ft_model, loaders["test"], dev)
+        y_true, y_prob = collect_neural_predictions(ft_model, loaders["test"], dev)
 
     else:
         loaders = make_seq_loaders(splits, num_workers=0)
         model, _ = get_model(model_name, device=dev)
         train_neural(model, loaders, device=device)
-        y_true, y_prob = evaluate_neural(model, loaders["test"], dev)
+        y_true, y_prob = collect_neural_predictions(model, loaders["test"], dev)
 
     metrics = compute_metrics(y_true, y_prob)
     elapsed = time.time() - t0
