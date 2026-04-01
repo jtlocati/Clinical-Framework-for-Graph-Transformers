@@ -16,7 +16,7 @@ import lightgbm as lgb
 import math
 
 import Task4.config as config
-from Task4.models import get_model, PretrainedTST, PretrainedTSTEncoder, PretrainedTSTForPretraining
+from Task4.models import get_model, PretrainedTST, PretrainedTSTForPretraining
 from Task4.dataset import  make_seq_loaders, make_flat_data
 from torch.optim.lr_scheduler import LambdaLR
 
@@ -209,7 +209,7 @@ def train_pretrained_tst(pretrain_model: PretrainedTSTForPretraining,
     return train_neural(ft_model, loaders, device=str(device))
 
 
-#Master experiment-runner
+# Master experiment-runner
 
 
 ALL_MODELS = [
@@ -252,7 +252,7 @@ def run_single(model_name: str, splits: dict, seed: int, device: str = "cuda") -
     print(f"✅ Done in {elapsed:.1f}s  |  "
           f"test AUROC={result['test']['auroc']:.4f}  "
           f"AUPRC={result['test']['auprc']:.4f}")
-    return result 
+    return result
     #return {"val": {}, "test": result}, y_true -> Check result format -> fornow hardcode and see where it goes \_(-_-)_/
 
 def RunSingleWithPred(model_name: str, splits: dict, seed: int, device: str = "cuda") -> tuple:
