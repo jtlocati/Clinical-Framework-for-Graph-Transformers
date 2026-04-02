@@ -12,7 +12,7 @@ MIMIC_DATASET = "physionet-data.mimiciv_3_1_derived"
 def get_client():
     return bigquery.Client(project=BQ_PROJECT)
 
-OUT_DIRECTORY = Path("outputs")
+OUT_DIRECTORY = Path("Tests/outputs")
 OUT_DIRECTORY .mkdir(exist_ok=True)
 
 def get_race(race):
@@ -51,14 +51,23 @@ print(new_table)
 
 new_table["race"] = new_table["race"].apply(get_race)
 
+new_table["age_group"] = pandas.cut(
+    new_table["age"],
+    bins=[-numpy.inf, 40, 65, numpy.inf],
+    labels=["<40", "40-65", "65+"],
+    right=False,
+)
 
+row_level_demo = new_table[["stay_id", "age", "sex", "race", "label", "age_group"]].copy()
+row_level_path = OUT_DIRECTORY / "mimic_row_level_demographics.csv"
+row_level_demo.to_csv(row_level_path, index=False)
+print(f"Saved row-level demographics to: {row_level_path}")
 
 
 #specify Male/Female only
 
 #Ag_groups
 
-new_table["age_group"] = pandas.cut(new_table["age"], bins=[-numpy.inf, 40, 65, numpy.inf], labels=["<40", "40-65", "65+"],right=False)
 
 simple_label = {
     #age
@@ -94,7 +103,7 @@ dist = pandas.DataFrame(row).sort_values("count", ascending=False).reset_index(d
 MAX_MIN = 30
 dist["enough_samples_in30"] = dist["count"] >= MAX_MIN
 
-dist_path = OUT_DIRECTORY / "mimic_demo_subgroup_distribution.csv"
+dist_path = OUT_DIRECTORY / "mimic_subgroup_distribution.csv"
 
 dist.to_csv(dist_path, index=False)
 
@@ -142,15 +151,12 @@ for name, mask in simple_label.items():
 auc_table = pandas.DataFrame(subgroup_results)
 
 #Save Results:
-auc_path = OUT_DIRECTORY / "mimic_demo_subgroup_auc.csv"
+auc_path = OUT_DIRECTORY / "mimic_subgroup_auc.csv"
 auc_table.to_csv(auc_path, index=False)
 
 print(f"\nSaved AUC table: {auc_path}")
 
-#Task 2 does not require computing AUC or fairness metrics yet. only test to see if subgroup has sufficient sample size to support reliable evaluation in later tasks.
 print("=======================================================AUC table=======================================================")   
 
 print(f"\nSubgroup AUC table results\n{auc_table}")
-
-#Save Demographics -> csv
-new_table.to_csv(OUT_DIRECTORY / "Task2Demographics.csv", index = False)
+print(f"\nRow-level demographics file ready for joining on stay_id: {row_level_path}")

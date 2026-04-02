@@ -70,7 +70,20 @@ def main():
             set_seed(seed)    # reset seed before each model
             result = run_single(model_name, splits, seed, device)
             results[model_name][seed] = result
+            if "test_outputs" in result:
+                pred_df = pd.DataFrame({
+                    "stay_id": result["test_outputs"]["ids"],
+                    "label": result["test_outputs"]["y_true"],
+                    "pred_score": result["test_outputs"]["y_prob"],
+                })
+                pred_path = os.path.join(
+                    config.RESULTS_DIECTORY,
+                    f"{model_name}_seed{seed}_test_predictions.csv"
+                )
+                pred_df.to_csv(pred_path, index=False)
+                print(f"  Saved test predictions to {pred_path}")
 
+                del result["test_outputs"]
     #3. Aggregate and report 
     print("\n" + "=" * 70)
     print("  RESULTS SUMMARY")
