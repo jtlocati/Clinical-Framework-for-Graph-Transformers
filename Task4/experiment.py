@@ -15,6 +15,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score, average_precision_score
 import lightgbm as lgb
 import math
+from pathlib import Path
+import pandas as pd
 
 import config
 from models import get_model, PretrainedTST, PretrainedTSTEncoder, PretrainedTSTForPretraining
@@ -76,6 +78,7 @@ def train_lightgbm(flat_data: dict, seed: int) -> dict:
 
 
 #  Neural model training loop
+
 def _get_warmup_cosine_scheduler(optimizer, warmup_epochs, total_epochs):
 #Linear warmup for `warmup_epochs`, then cosine decay to 0.
     def lr_lambda(epoch):
@@ -86,7 +89,42 @@ def _get_warmup_cosine_scheduler(optimizer, warmup_epochs, total_epochs):
     return LambdaLR(optimizer, lr_lambda)
 
 
-def train_neural(model: nn.Module, loaders: dict, tc: config.TrainConfig = None, device: str = "cuda") -> dict:
+# --- Race weighting helpers ---
+def _load_race_lookup():
+    repo_root = Path(__file__).resolve().parents[1]
+    demo_path = repo_root / "Tests" / "outputs" / "Task2Demographics.csv"
+    demo = pd.read_csv(demo_path)
+    demo.columns = demo.columns.str.strip()
+    return dict(zip(demo["stay_id"], demo["race"]))
+
+
+def _make_batch_race_weights(ids, max_weight: float = 10.0):
+    race_lookup = _load_race_lookup()
+
+    capped_weights = {
+        "White": 1.526863,
+        "Black": 9.378254,
+        "Unknown": 9.901691,
+        "Other": 10.0,
+        "Hispanic": 10.0,
+        "Asian": 10.0,
+    }
+
+    weights = []
+    for sid in ids:
+        race = race_lookup.get(int(sid), None)
+        if race in capped_weights:
+            weights.append(capped_weights[race])
+        else:
+            weights.append(1.0)
+
+    return torch.tensor(weights, dtype=torch.float32)
+
+
+def train_neural(model: nn.Module, loaders: dict, tc: config.TrainConfig = None,
+                 device: str = "cuda",
+                 loss_weighting_strategy: str = None,
+                 max_loss_weight: float = 10.0) -> dict:
     """
     Standard training loop with:
       - Binary loss
@@ -103,7 +141,10 @@ def train_neural(model: nn.Module, loaders: dict, tc: config.TrainConfig = None,
     capped_pw = min(raw_pw, tc.max_pos_weight)
     pos_weight = torch.tensor([capped_pw], dtype=torch.float32, device=device)
     print(f"    pos_weight: raw={raw_pw:.2f}, capped={capped_pw:.2f}")
-    criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+    if loss_weighting_strategy == "race_weighted":
+        criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight, reduction="none")
+    else:
+        criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
     # optimizer + warmup‑cosine scheduler
     optimizer = AdamW(model.parameters(), lr=tc.Lr, weight_decay=tc.WeightDecay)
@@ -120,7 +161,14 @@ def train_neural(model: nn.Module, loaders: dict, tc: config.TrainConfig = None,
         for ids, x, m, y in loaders["train"]:
             x, m, y = x.to(device), m.to(device), y.float().to(device)
             logits = model(x, m)
-            loss = criterion(logits, y)
+
+            if loss_weighting_strategy == "race_weighted":
+                per_sample_loss = criterion(logits, y)
+                batch_weights = _make_batch_race_weights(ids, max_weight=max_loss_weight).to(device)
+                loss = (per_sample_loss * batch_weights).mean()
+            else:
+                loss = criterion(logits, y)
+
             optimizer.zero_grad()
             loss.backward()
             nn.utils.clip_grad_norm_(model.parameters(), 1.0)
@@ -215,19 +263,16 @@ def train_pretrained_tst(pretrain_model: PretrainedTSTForPretraining,
     #  Phase 1: pretrain 
     print("    Phase 1: Selfsupervised pretraining …")
     optimizer = AdamW(pretrain_model.parameters(), lr=pc.pretrain_lr)
-    for epoch in range(1, pc.pretrain_epochs + 1):
-        pretrain_model.train()
-        losses = []
-        for x, m, _ in loaders["train"]:
-            x, m = x.to(device), m.to(device)
-            loss = pretrain_model(x, m)
-            optimizer.zero_grad()
-            loss.backward()
-            nn.utils.clip_grad_norm_(pretrain_model.parameters(), 1.0)
-            optimizer.step()
-            losses.append(loss.item())
-        if epoch % 10 == 0 or epoch == 1:
-            print(f"      Pretrain epoch {epoch:3d}  recon_loss={np.mean(losses):.4f}")
+    for _, x, m, _ in loaders["train"]:
+        x, m = x.to(device), m.to(device)
+        loss = pretrain_model(x, m)
+        optimizer.zero_grad()
+        loss.backward()
+        nn.utils.clip_grad_norm_(pretrain_model.parameters(), 1.0)
+        optimizer.step()
+        losses.append(loss.item())
+    if epoch % 10 == 0 or epoch == 1:
+        print(f"      Pretrain epoch {epoch:3d}  recon_loss={np.mean(losses):.4f}")
 
     #  Phase 2: fine‑tune 
     print("    Phase 2: Fine‑tuning for classification …")
@@ -256,8 +301,11 @@ ALL_MODELS = [
 
 
 def run_single(model_name: str, splits: dict, seed: int,
-               device: str = "cuda") -> dict:
-    #Run one model on one seed.  Returns dict with val/test metrics.
+               device: str = "cuda",
+               sampling_strategy: str = None,
+               max_sampling_weight: float = 10.0,
+               loss_weighting_strategy: str = None,
+               max_loss_weight: float = 10.0) -> dict:
 
     print(f"\n  ▶ {model_name}  (seed={seed})")
     t0 = time.time()
@@ -271,15 +319,31 @@ def run_single(model_name: str, splits: dict, seed: int,
         result = train_lightgbm(flat, seed)
 
     elif model_name == "PretrainedTST":
-        loaders = make_seq_loaders(splits, num_workers=0)
+        loaders = make_seq_loaders(
+            splits,
+            num_workers=0,
+            sampling_strategy=sampling_strategy,
+            max_sampling_weight=max_sampling_weight,
+        )
         pretrain_model, _ = get_model("PretrainedTST", device=torch.device(device))
         result = train_pretrained_tst(pretrain_model, loaders, device)
 
     else:
         # LSTM, StandardTransformer, ChronoFormer, PatchTST
-        loaders = make_seq_loaders(splits, num_workers=0)
+        loaders = make_seq_loaders(
+            splits,
+            num_workers=0,
+            sampling_strategy=sampling_strategy,
+            max_sampling_weight=max_sampling_weight,
+        )
         model, _ = get_model(model_name, device=torch.device(device))
-        result = train_neural(model, loaders, device=device)
+        result = train_neural(
+            model,
+            loaders,
+            device=device,
+            loss_weighting_strategy=loss_weighting_strategy,
+            max_loss_weight=max_loss_weight,
+        )
 
     elapsed = time.time() - t0
     print(f"Done in {elapsed:.1f}s  |  "
