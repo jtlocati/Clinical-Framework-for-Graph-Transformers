@@ -8,7 +8,7 @@ BQ_PROJECT = "project-bb25f1c3-ff0a-47c9-9d0"
 MIMIC = "physionet-data.mimiciv_3_1_derived"
 DemographicsPath = r"C:\Users\jetlo\OneDrive\Documents\GitHub\Clinical-Framework-for-Graph-Transformers\Tests\outputs\Task2Demographics.csv"
 
-BASELINE_MODELS = ["LSTM", "StandaredTransformer", "ChronoFormer", "PatchTST"]
+BASELINE_MODELS = ["LSTM", "StandardTransformer", "ChronoFormer", "PatchTST"]
 TRANSFORMMERS = ["temporal_only", "clinical_only", "full_model"]
 
 seed =  45 #same see for all cuz we are comparing directly

@@ -1,17 +1,3 @@
-"""models.py — All 7 model architectures for ICU Mortality Prediction
-===================================================================
-Traditional (sklearn / lightgbm):
-  1. LogisticRegressionModel
-  2. LightGBMModel
-
-Neural (PyTorch):
-  3. LSTMModel
-  4. StandardTransformer
-
-Advanced (PyTorch):
-  5. ChronoFormer      — multi scale temporal attention
-  6. PatchTST           — patch based time series transformer
-  7. PretrainedTST      — self supervised pretrain -> fine tune"""
 
 import math
 import numpy
@@ -330,11 +316,7 @@ class PretrainedTSTForPretraining(nn.Module):
         self.decoder = nn.Linear(c.d_model, input_dim)
 
     def forward(self, x, mask):
-        """
-        x:    (B, T, F)
-        mask: (B, T, F)
-        Returns: loss (scalar)
-        """
+
         inp = torch.cat([x, mask], dim=-1)          # (B, T, 2F)
         B, T, D = inp.shape
 
@@ -350,8 +332,8 @@ class PretrainedTSTForPretraining(nn.Module):
         inp_masked[batch_idx, mask_idx] = self.mask_token.squeeze(0)
 
         # encode → decode
-        h = self.encoder(inp_masked)                 # (B, T, d)
-        recon = self.decoder(h)                      # (B, T, 2F)
+        h = self.encoder(inp_masked) # (B, T, d)
+        recon = self.decoder(h) # (B, T, 2F)
 
         # loss only on masked positions
         target = inp[batch_idx, mask_idx]            # (B, num_mask, 2F)

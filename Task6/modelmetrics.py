@@ -5,7 +5,7 @@ import numpy
 import torch
 import sklearn.metrics
 
-from Task4.experiment import run_single
+from Task4.experiment import run_single, RunSingleWithPred
 from Task5 import ClinGroups, Graph, Models, Train
 
 import Task6.config
@@ -16,7 +16,7 @@ class GraphDS(torch.utils.data.Dataset):
         self.Y = torch.from_numpy(y).long()
 
     def __len__(self):
-        return len(self.y)
+        return len(self.Y)
     
     def __getitem__(self, idx):
         return self.X[idx], self.Y[idx]
@@ -66,7 +66,7 @@ def TAPTGT(varient: str, splits: dict, seed: int, device: str = "cpu") -> tuple:
 
     TrainLoader = torch.utils.data.DataLoader(GraphDS(X_Train, Y_Train), batch_size=TrainConfig.batch, shuffle=True, num_workers=0, pin_memory=True)
     ValidateLoader = torch.utils.data.DataLoader(GraphDS(X_Validation, Y_Validation), batch_size=TrainConfig.batch, shuffle=True, num_workers=0, pin_memory=True )
-    TestLoader = torch.utils.data.DataLoader(GraphDS(X_Test, Y_Test), batch_size=TrainConfig, shuffle=True, num_workers=0, pin_memory=True)
+    TestLoader = torch.utils.data.DataLoader(GraphDS(X_Test, Y_Test), batch_size=TrainConfig.batch, shuffle=True, num_workers=0, pin_memory=True)
 
     adj = Graph.AdjType(varient, ModelConfig.seq_len)
     attention_mask = Graph.ADJ2AtMask(adj).to(device)
@@ -126,7 +126,7 @@ def CollectMetrics(splits: dict, seed) -> dict:
     for name in Task6.config.BASELINE_MODELS:
         print(f"{Task6.config.BAG}\nTraining: {name}\n{Task6.config.BAG}")
         t0 = time.time()
-        _, y_true, y_prob = run_single(name, splits, seed, device="cpu")
+        _, y_true, y_prob = RunSingleWithPred(name, splits, seed, device="cpu")
 
 
         print(f"{Task6.config.BAG}  TRAINING FOR {name} DONE\n  Time {time.time() - - t0 :.1}\nAUROC: {sklearn.metrics.roc_auc_score(y_true, y_prob):.4f}\n{Task6.config.BAG}")

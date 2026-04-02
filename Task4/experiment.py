@@ -85,6 +85,36 @@ def _get_warmup_cosine_scheduler(optimizer, warmup_epochs, total_epochs):
         return 0.5 * (1.0 + math.cos(math.pi * progress)) # cosine 1→0
     return LambdaLR(optimizer, lr_lambda)
 
+def evaluate_neural(model: torch.nn.Module, loader, device) -> dict:
+    model.eval()
+    all_y, all_p = [], []
+    with torch.no_grad():
+        for x, m, y in loader:
+            x, m = x.to(device), m.to(device)
+            logits = model(x, m)
+            probs = torch.sigmoid(logits).cpu().numpy()
+            all_y.append(y.numpy())
+            all_p.append(probs)
+    y_true = numpy.concatenate(all_y)
+    y_prob = numpy.concatenate(all_p)
+    return compute_metrics(y_true, y_prob)
+
+def predict_neural(model, loader, device)-> int:
+    model.eval()
+    all_y = []
+    all_p = []
+    with torch.no_grad():
+        for x, m, y in loader:
+            x = x.to(device)
+            m = m.to(device)
+            logits = model(x, m)
+            probs = torch.sigmoid(logits)
+            all_y.append(y.numpy())
+            all_p.append(probs)
+            y_true = numpy.concatenate(all_y)
+            y_prob = numpy.concatenate(all_p)
+            return y_true, y_prob
+        
 
 def train_neural(model: torch.nn.Module, loaders: dict, tc: config.TrainConfig = None, device: str = "cuda") -> dict:
     """
@@ -157,19 +187,6 @@ def train_neural(model: torch.nn.Module, loaders: dict, tc: config.TrainConfig =
     return {"val": val_m, "test": test_m}
 
 
-def evaluate_neural(model: torch.nn.Module, loader, device) -> dict:
-    model.eval()
-    all_y, all_p = [], []
-    with torch.no_grad():
-        for x, m, y in loader:
-            x, m = x.to(device), m.to(device)
-            logits = model(x, m)
-            probs = torch.sigmoid(logits).cpu().numpy()
-            all_y.append(y.numpy())
-            all_p.append(probs)
-    y_true = numpy.concatenate(all_y)
-    y_prob = numpy.concatenate(all_p)
-    return compute_metrics(y_true, y_prob)
 
 
 #  PretrainedTST two‑phase training
@@ -278,10 +295,8 @@ def RunSingleWithPred(model_name: str, splits: dict, seed: int, device: str = "c
         params = {**config.LGBM_PARAMS, "seed": seed}
         dtrain = lgb.Dataset(X_tr, label=y_tr)
         dval = lgb.Dataset(X_val, label=y_val, reference=dtrain)
-        callbacks = [lgb.early_stopping(stopping_rounds=config.LGBM_EARLY_STOP),
-                     lgb.log_evaluation(period=200)]
-        mdl = lgb.train(params, dtrain, num_boost_round=config.LGBM_ROUNDS,
-                        valid_sets=[dval], valid_names=["val"], callbacks=callbacks)
+        callbacks = [lgb.early_stopping(stopping_rounds=config.EARLY_STOP),lgb.log_evaluation(period=200)]
+        mdl = lgb.train(params, dtrain, num_boost_round=config.LGBM_ROUNDS, valid_sets=[dval], valid_names=["val"], callbacks=callbacks)
         y_prob = mdl.predict(X_te)
         y_true = y_te
 
@@ -306,13 +321,13 @@ def RunSingleWithPred(model_name: str, splits: dict, seed: int, device: str = "c
         encoder = pretrain_model2.encoder
         ft_model = PretrainedTST(encoder, pc).to(dev)
         train_neural(ft_model, loaders, device=device)
-        y_true, y_prob = evaluate_neural(ft_model, loaders["test"], dev)
+        y_true, y_prob = predict_neural(ft_model, loaders["test"], dev)
 
     else:
         loaders = make_seq_loaders(splits, num_workers=0)
         model, _ = get_model(model_name, device=dev)
         train_neural(model, loaders, device=device)
-        y_true, y_prob = evaluate_neural(model, loaders["test"], dev)
+        y_true, y_prob = predict_neural(model, loaders["test"], dev)
 
     metrics = compute_metrics(y_true, y_prob)
     elapsed = time.time() - t0
