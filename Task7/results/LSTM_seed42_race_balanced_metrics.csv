@@ -1,0 +1,2 @@
+model,seed,intervention,val_auroc,val_auprc,test_auroc,test_auprc
+LSTM,42,race_balanced,0.8209195951929582,0.47263175001009644,0.8163375214890592,0.41695984934039376
