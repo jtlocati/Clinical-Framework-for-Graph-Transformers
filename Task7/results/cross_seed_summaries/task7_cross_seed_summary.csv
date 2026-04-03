@@ -1,3 +1,4 @@
 model,setting,test_auroc_mean,test_auprc_mean,sex_auroc_gap_mean,sex_auprc_gap_mean,age_auroc_gap_mean,age_auprc_gap_mean,race_auroc_gap_mean,race_auprc_gap_mean,n_seeds
 TGTFull,original_mean_3seeds,0.832797,0.482497,0.003281,0.028741,0.072903,0.08863,0.129185,0.236523,3
 TGTFull,race_weighted_cap10_mean_3seeds,0.824505,0.472576,0.010582,0.036192,0.093379,0.090118,0.129093,0.231847,3
+LSTM,race_weighted_cap5_mean_3seeds,0.825907,0.471632,0.005465,0.039583,0.076456,0.074808,0.134813,0.24123,3

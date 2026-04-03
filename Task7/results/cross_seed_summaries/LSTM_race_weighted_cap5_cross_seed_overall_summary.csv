@@ -1,0 +1,2 @@
+model,setting,test_auroc_mean,test_auroc_std,test_auprc_mean,test_auprc_std,n_seeds
+LSTM,race_weighted_cap5_mean_3seeds,0.8259067630532032,0.014074716434217196,0.4716320385312747,0.026934719433134656,3
