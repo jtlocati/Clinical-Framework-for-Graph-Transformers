@@ -28,6 +28,7 @@ Main findings:
 - However, the average race AUROC gap stayed essentially unchanged, and the average race AUPRC gap improved slightly.
 - Age and sex disparity did not improve consistently and were worse on average.
 - Overall, TGTFull appears more intervention-sensitive and less uniformly improvable than LSTM, but race-weighted cap 10 is still the most defensible fairness intervention for the graph-transformer model.
+- We also tested race-weighted loss with cap 15 on seed 42. It did not improve on cap 10: overall performance remained similarly reduced, while race disparity was slightly worse, so cap 15 was rejected.
 
 Cross-seed TGTFull summary:
 - Original mean AUROC: 0.832797
@@ -47,3 +48,4 @@ Overall conclusion:
 - Weighted loss was generally less damaging to overall performance than race-balanced sampling.
 - For LSTM, a mild weighted-loss cap of 5.0 is the best candidate setting.
 - For TGTFull, race-weighted cap 10 is the best intervention tested so far, but its benefits are narrow and mainly concentrated in race AUPRC disparity rather than broad fairness improvement.
+- We also evaluated post-hoc global threshold tuning for TGTFull_race_weighted_cap10 across seeds 42, 123, and 2024 using thresholds 0.40, 0.45, and 0.50. Across seeds, 0.45 gave the best overall fairness-performance compromise relative to the default 0.50, improving F1 and reducing several disparity measures while only modestly lowering overall accuracy.
