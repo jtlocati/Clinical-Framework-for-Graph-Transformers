@@ -1,0 +1,302 @@
+{
+  "seed": 42,
+  "models": [
+    "LSTM",
+    "StandardTransformer",
+    "ChronoFormer",
+    "PatchTST"
+  ],
+  "overall": [
+    {
+      "model": "LSTM",
+      "auroc": 0.8207579226535362,
+      "auprc": 0.45230777243803966
+    },
+    {
+      "model": "StandardTransformer",
+      "auroc": 0.8252313832233236,
+      "auprc": 0.45473973422212705
+    },
+    {
+      "model": "ChronoFormer",
+      "auroc": 0.8251060303782782,
+      "auprc": 0.46154394237218005
+    },
+    {
+      "model": "PatchTST",
+      "auroc": 0.820890902788095,
+      "auprc": 0.44563718874572267
+    },
+    {
+      "model": "tgt_temporal_only",
+      "auroc": 0.8171862508931667,
+      "auprc": 0.4327975711583521
+    },
+    {
+      "model": "tgt_clinical_only",
+      "auroc": 0.8235199963212145,
+      "auprc": 0.4406319403198728
+    },
+    {
+      "model": "tgt_full_graph",
+      "auroc": 0.8174935532822549,
+      "auprc": 0.430780057756323
+    }
+  ],
+  "gaps": [
+    {
+      "model": "ChronoFormer",
+      "attribute": "age",
+      "auroc_max": 0.8798185941043084,
+      "auroc_min": 0.8003603020889322,
+      "auroc_gap": 0.07945829201537624,
+      "auroc_std": 0.0408864666709018,
+      "auprc_max": 0.48976814571372834,
+      "auprc_min": 0.3840105907461794,
+      "auprc_gap": 0.10575755496754896,
+      "auprc_std": 0.05497773271912605
+    },
+    {
+      "model": "ChronoFormer",
+      "attribute": "race",
+      "auroc_max": 0.8955211024978467,
+      "auroc_min": 0.7131578947368421,
+      "auroc_gap": 0.18236320776100456,
+      "auroc_std": 0.06480827652345,
+      "auprc_max": 0.624432806452719,
+      "auprc_min": 0.3854609458948133,
+      "auprc_gap": 0.23897186055790576,
+      "auprc_std": 0.08624649753005938
+    },
+    {
+      "model": "ChronoFormer",
+      "attribute": "sex",
+      "auroc_max": 0.8332019174463101,
+      "auroc_min": 0.8139693677921755,
+      "auroc_gap": 0.019232549654134568,
+      "auroc_std": 0.013599466279945542,
+      "auprc_max": 0.46474347014799333,
+      "auprc_min": 0.4621900569438088,
+      "auprc_gap": 0.002553413204184507,
+      "auprc_std": 0.0018055357918501354
+    },
+    {
+      "model": "LSTM",
+      "attribute": "age",
+      "auroc_max": 0.8621315192743764,
+      "auroc_min": 0.7981326125773214,
+      "auroc_gap": 0.06399890669705499,
+      "auroc_std": 0.03373095825119779,
+      "auprc_max": 0.47679912325263124,
+      "auprc_min": 0.37973361890767676,
+      "auprc_gap": 0.09706550434495448,
+      "auprc_std": 0.050987764803594175
+    },
+    {
+      "model": "LSTM",
+      "attribute": "race",
+      "auroc_max": 0.8852713178294573,
+      "auroc_min": 0.7032894736842105,
+      "auroc_gap": 0.18198184414524687,
+      "auroc_std": 0.06522121790389471,
+      "auprc_max": 0.5691501922199992,
+      "auprc_min": 0.37522386835135757,
+      "auprc_gap": 0.19392632386864161,
+      "auprc_std": 0.07323209999890073
+    },
+    {
+      "model": "LSTM",
+      "attribute": "sex",
+      "auroc_max": 0.8220084160640603,
+      "auroc_min": 0.8194372695050728,
+      "auroc_gap": 0.0025711465589874916,
+      "auroc_std": 0.0018180751672845128,
+      "auprc_max": 0.46827548733173396,
+      "auprc_min": 0.4449537187430288,
+      "auprc_gap": 0.02332176858870516,
+      "auprc_std": 0.016490980718336837
+    },
+    {
+      "model": "PatchTST",
+      "attribute": "age",
+      "auroc_max": 0.8587301587301588,
+      "auroc_min": 0.7981835718645519,
+      "auroc_gap": 0.06054658686560688,
+      "auroc_std": 0.0319799668158023,
+      "auprc_max": 0.4647826936352615,
+      "auprc_min": 0.35591988634268,
+      "auprc_gap": 0.10886280729258146,
+      "auprc_std": 0.058884741744786834
+    },
+    {
+      "model": "PatchTST",
+      "attribute": "race",
+      "auroc_max": 0.8967700258397934,
+      "auroc_min": 0.7142543859649123,
+      "auroc_gap": 0.18251563987488106,
+      "auroc_std": 0.06206955714963164,
+      "auprc_max": 0.6423456760911834,
+      "auprc_min": 0.36078626275145403,
+      "auprc_gap": 0.2815594133397294,
+      "auprc_std": 0.0982809484690093
+    },
+    {
+      "model": "PatchTST",
+      "attribute": "sex",
+      "auroc_max": 0.8268074791300677,
+      "auroc_min": 0.8122294449945231,
+      "auroc_gap": 0.014578034135544593,
+      "auroc_std": 0.010308226793612551,
+      "auprc_max": 0.45632625251667486,
+      "auprc_min": 0.44138456197704,
+      "auprc_gap": 0.014941690539634844,
+      "auprc_std": 0.010565370702966682
+    },
+    {
+      "model": "StandardTransformer",
+      "attribute": "age",
+      "auroc_max": 0.8578987150415722,
+      "auroc_min": 0.802491482112436,
+      "auroc_gap": 0.055407232929136185,
+      "auroc_std": 0.031546882270490906,
+      "auprc_max": 0.49927576908916166,
+      "auprc_min": 0.3025514657853151,
+      "auprc_gap": 0.19672430330384655,
+      "auprc_std": 0.10298804636215089
+    },
+    {
+      "model": "StandardTransformer",
+      "attribute": "race",
+      "auroc_max": 0.8998277347114557,
+      "auroc_min": 0.7236842105263157,
+      "auroc_gap": 0.17614352418514,
+      "auroc_std": 0.06364544392108801,
+      "auprc_max": 0.6099128907710009,
+      "auprc_min": 0.40227019700476463,
+      "auprc_gap": 0.20764269376623623,
+      "auprc_std": 0.08921311869855814
+    },
+    {
+      "model": "StandardTransformer",
+      "attribute": "sex",
+      "auroc_max": 0.8281291280249485,
+      "auroc_min": 0.8212961767139734,
+      "auroc_gap": 0.006832951310975166,
+      "auroc_std": 0.00483162620750805,
+      "auprc_max": 0.4610530972751413,
+      "auprc_min": 0.4477681594693869,
+      "auprc_gap": 0.013284937805754404,
+      "auprc_std": 0.009393869610090472
+    },
+    {
+      "model": "tgt_clinical_only",
+      "attribute": "age",
+      "auroc_max": 0.8630385487528345,
+      "auroc_min": 0.7991201978700726,
+      "auroc_gap": 0.06391835088276188,
+      "auroc_std": 0.034475088136251164,
+      "auprc_max": 0.47728985541384283,
+      "auprc_min": 0.3313983223967216,
+      "auprc_gap": 0.1458915330171212,
+      "auprc_std": 0.07595698507509685
+    },
+    {
+      "model": "tgt_clinical_only",
+      "attribute": "race",
+      "auroc_max": 0.8936261843238588,
+      "auroc_min": 0.7162280701754387,
+      "auroc_gap": 0.1773981141484201,
+      "auroc_std": 0.060647170826341815,
+      "auprc_max": 0.6167347784950319,
+      "auprc_min": 0.4023133150775626,
+      "auprc_gap": 0.21442146341746926,
+      "auprc_std": 0.08906408404003495
+    },
+    {
+      "model": "tgt_clinical_only",
+      "attribute": "sex",
+      "auroc_max": 0.8275108605357411,
+      "auroc_min": 0.8181140911025968,
+      "auroc_gap": 0.00939676943314427,
+      "auroc_std": 0.006644519387422783,
+      "auprc_max": 0.44834365790939634,
+      "auprc_min": 0.43782313023964325,
+      "auprc_gap": 0.010520527669753088,
+      "auprc_std": 0.007439136456943116
+    },
+    {
+      "model": "tgt_full_graph",
+      "attribute": "age",
+      "auroc_max": 0.8678004535147392,
+      "auroc_min": 0.7969286638304075,
+      "auroc_gap": 0.07087178968433172,
+      "auroc_std": 0.035749538122111714,
+      "auprc_max": 0.4617662763324784,
+      "auprc_min": 0.3238956493124814,
+      "auprc_gap": 0.13787062701999703,
+      "auprc_std": 0.07264449801048205
+    },
+    {
+      "model": "tgt_full_graph",
+      "attribute": "race",
+      "auroc_max": 0.8864341085271318,
+      "auroc_min": 0.6605263157894736,
+      "auroc_gap": 0.22590779273765815,
+      "auroc_std": 0.07854030698297032,
+      "auprc_max": 0.603339231498041,
+      "auprc_min": 0.33562747502847623,
+      "auprc_gap": 0.2677117564695648,
+      "auprc_std": 0.09788555764497828
+    },
+    {
+      "model": "tgt_full_graph",
+      "attribute": "sex",
+      "auroc_max": 0.8214943280086067,
+      "auroc_min": 0.8117152410062135,
+      "auroc_gap": 0.00977908700239316,
+      "auroc_std": 0.0069148587332054316,
+      "auprc_max": 0.4413850778011857,
+      "auprc_min": 0.42570815581585764,
+      "auprc_gap": 0.01567692198532805,
+      "auprc_std": 0.01108525784395794
+    },
+    {
+      "model": "tgt_temporal_only",
+      "attribute": "age",
+      "auroc_max": 0.871655328798186,
+      "auroc_min": 0.7933358917362826,
+      "auroc_gap": 0.07831943706190336,
+      "auroc_std": 0.03981732780291483,
+      "auprc_max": 0.4506454300482607,
+      "auprc_min": 0.38455796543823545,
+      "auprc_gap": 0.06608746461002524,
+      "auprc_std": 0.035024315500274475
+    },
+    {
+      "model": "tgt_temporal_only",
+      "attribute": "race",
+      "auroc_max": 0.892764857881137,
+      "auroc_min": 0.7092105263157895,
+      "auroc_gap": 0.1835543315653475,
+      "auroc_std": 0.06002118597597332,
+      "auprc_max": 0.5545594728117843,
+      "auprc_min": 0.36505833859396764,
+      "auprc_gap": 0.18950113421781667,
+      "auprc_std": 0.0779636044908666
+    },
+    {
+      "model": "tgt_temporal_only",
+      "attribute": "sex",
+      "auroc_max": 0.8183939137380956,
+      "auroc_min": 0.81609606297068,
+      "auroc_gap": 0.00229785076741551,
+      "auroc_std": 0.0016248258597942194,
+      "auprc_max": 0.4574058609722436,
+      "auprc_min": 0.41856888081509375,
+      "auprc_gap": 0.03883698015714987,
+      "auprc_std": 0.02746189202992806
+    }
+  ],
+  "best_baseline": "StandardTransformer",
+  "best_tgt": "tgt_clinical_only"
+}
