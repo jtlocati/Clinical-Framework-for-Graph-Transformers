@@ -9,7 +9,6 @@ Handles:
 import time
 import numpy
 import torch
-import torch
 from torch.optim import AdamW
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score, average_precision_score
@@ -99,7 +98,7 @@ def evaluate_neural(model: torch.nn.Module, loader, device) -> dict:
     y_prob = numpy.concatenate(all_p)
     return compute_metrics(y_true, y_prob)
 
-def predict_neural(model, loader, device)-> int:
+def predict_neural(model, loader, device) -> tuple:
     model.eval()
     all_y = []
     all_p = []
@@ -108,12 +107,12 @@ def predict_neural(model, loader, device)-> int:
             x = x.to(device)
             m = m.to(device)
             logits = model(x, m)
-            probs = torch.sigmoid(logits)
+            probs = torch.sigmoid(logits).cpu().numpy()
             all_y.append(y.numpy())
             all_p.append(probs)
-            y_true = numpy.concatenate(all_y)
-            y_prob = numpy.concatenate(all_p)
-            return y_true, y_prob
+    y_true = numpy.concatenate(all_y)
+    y_prob = numpy.concatenate(all_p)
+    return y_true, y_prob
         
 
 def train_neural(model: torch.nn.Module, loaders: dict, tc: config.TrainConfig = None, device: str = "cuda") -> dict:

@@ -32,10 +32,7 @@ def main():
     OverallMetrics = metrics[metrics["subgroup"] == "overall"][["model", "auroc", "auprc"]]
     print(OverallMetrics.to_string(index=False))
 
-    print(f"{config.BAG}FAIRNESS GAPS :{config.BAG}\n{gap[["model", "attribute", "auroc_gap", "auroc_gap", "auroc_std "]].to_string(index=False)}")
-
-    print(f"{config.BAG}GENERATING PLOTS{config.BAG}")
-    plotting.AllPlot(metrics, gap)
+    print(f"{config.BAG}FAIRNESS GAPS :{config.BAG}\n{gap[["model", "attribute", "auroc_gap", "auprc_gap", "auroc_std"]].to_string(index=False)}")
 
     print(f"{config.BAG}GENERATING PLOTS{config.BAG}")
     plotting.AllPlot(metrics, gap)

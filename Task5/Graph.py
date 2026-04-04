@@ -19,7 +19,7 @@ def TemporalAdj(seq_length = 48) -> torch.BoolTensor:
 #*
 def ClinicalAdj(seq_length = 48, TSkip: list = None) -> torch.BoolTensor:
     if TSkip == None:
-        TSkip = ClinGroups.TIME_SKIP
+        TSkip = Task5.ClinGroups.TIME_SKIP
     
     adj = torch.zeros(seq_length, seq_length, dtype=torch.bool)
     for K in TSkip:

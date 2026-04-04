@@ -9,9 +9,9 @@ MIMIC = "physionet-data.mimiciv_3_1_derived"
 DemographicsPath = r"C:\Users\jetlo\OneDrive\Documents\GitHub\Clinical-Framework-for-Graph-Transformers\Tests\outputs\Task2Demographics.csv"
 
 BASELINE_MODELS = ["LSTM", "StandardTransformer", "ChronoFormer", "PatchTST"]
-TRANSFORMMERS = ["temporal_only", "clinical_only", "full_model"]
+TRANSFORMMERS = ["temporal_only", "clinical_only", "full_graph"]
 
-seed =  45 #same see for all cuz we are comparing directly
+seed =  42 #same see for all cuz we are comparing directly
 
 AGE_BINS = [0, 40, 65, 200]
 AGE_LABELS = ["<40", "40-65", "65+"]

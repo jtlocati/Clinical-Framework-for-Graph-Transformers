@@ -10,9 +10,9 @@ import pandas
 
 def Heatmap(gap: pandas.DataFrame, save: str = None):
     
-    pivot = gap.pivot(index="model", columns="attrobute", values="auroc_gap")
+    pivot = gap.pivot(index="model", columns="attribute", values="auroc_gap")
 
-    orderd_data = [m for m in config.BASELINE_MODELS if m in pivot.index]
+    orderd_data = [m for m in config.BASELINE_MODELS + [f"tgt_{v}" for v in config.TRANSFORMMERS] if m in pivot.index]
     pivot = pivot.loc[orderd_data]
 
     figure, aux = matplotlib.pyplot.subplots(figsize=(8, max(5, len(orderd_data) * 0.6)))
@@ -34,26 +34,27 @@ def Heatmap(gap: pandas.DataFrame, save: str = None):
             if val > .06:
                 color = "white"
             else:
-                color = "balck"
-            aux.text(j, i, text, ha="center", va="center", fontsize=10, color="black")
+                color = "black"
+            aux.text(j, i, text, ha="center", va="center", fontsize=10, color=color)
 
-            figure.colorbar(im, ax=aux, label = "AUROC gap")
-            aux.set_title("AUROC FAIRNESS GAP HM", fontsize=13, pad=12)
+    figure.colorbar(im, ax=aux, label = "AUROC gap")
+    aux.set_title("AUROC FAIRNESS GAP HM", fontsize=13, pad=12)
 
-            matplotlib.pyplot.tight_layout()
-            path = os.path.join(save, "T6_farnessHM.png")
-            matplotlib.pyplot.close()
-            print(f"HEATMAP SAVED -> {path}")
+    matplotlib.pyplot.tight_layout()
+    path = os.path.join(save, "T6_farnessHM.png")
+    matplotlib.pyplot.savefig(path, dpi=150)
+    matplotlib.pyplot.close()
+    print(f"HEATMAP SAVED -> {path}")
 
 
 def SubgroupBar(metrics: pandas.DataFrame, attrobute:str, save: str = None):
-    sub = metrics[(metrics["attribute"] == attrobute & metrics["auroc"].notna)].copy()
+    sub = metrics[(metrics["attribute"] == attrobute) & (metrics["auroc"].notna())].copy()
 
     if len(sub) == 0:
         print(f"NO DATA FOR {attrobute}")
         return
-    subgroups = sorted(sub["subgroups"] == attrobute)
-    models = [m for m in config.BASELINE_MODELS if m in sub["model"].unique()]
+    subgroups = sorted(sub["subgroup"].unique())
+    models = [m for m in config.BASELINE_MODELS + [f"tgt_{v}" for v in config.TRANSFORMMERS] if m in sub["model"].unique()]
     NumberGroups = len(subgroups)
     NumberModels = len(models)
 
@@ -64,51 +65,51 @@ def SubgroupBar(metrics: pandas.DataFrame, attrobute:str, save: str = None):
     for i, model in enumerate(models):
         values = []
         for group in subgroups:
-            row = sub[(sub["model"] == model) & sub["subgroup"] == group]
+            row = sub[(sub["model"] == model) & (sub["subgroup"] == group)]
             if len(row):
                 values.append(row["auroc"].values[0])
             else:
                 values.append(0)
         offset = (i - NumberModels / 2 + 0.5) * (.8/ NumberModels)
-        bars = ax.bar(offset, values, (.8/ NumberModels), label=model, alpha=.85)
+        bars = ax.bar(X + offset, values, (.8/ NumberModels), label=model, alpha=.85)
 
-        ax.set_xlabel("Subgroup", fontsize=12)
-        ax.set_ylabel("AUROC", fontsize=12)
-        ax.set_title(f"Subgroup AUROC — {attrobute.title()}", fontsize=13)
-        ax.set_xticks(X)
-        ax.set_xticklabels(subgroups, fontsize=10)
-        ax.legend(fontsize=8, loc="lower right")
-        ax.set_ylim(0.5, 1.0)
-        ax.grid(axis="y", alpha=0.3)
+    ax.set_xlabel("Subgroup", fontsize=12)
+    ax.set_ylabel("AUROC", fontsize=12)
+    ax.set_title(f"Subgroup AUROC — {attrobute.title()}", fontsize=13)
+    ax.set_xticks(X)
+    ax.set_xticklabels(subgroups, fontsize=10)
+    ax.legend(fontsize=8, loc="lower right")
+    ax.set_ylim(0.5, 1.0)
+    ax.grid(axis="y", alpha=0.3)
 
-        matplotlib.pyplot.tight_layout()
-        SavePath = os.path.join(save, f"T6_Bar{attrobute}.png")
-        matplotlib.pyplot.savefig(SavePath, dpi=150)
-        matplotlib.pyplot.close()
-        print(f"{attrobute} BAR GRAPH SAVED -> {SavePath}")
+    matplotlib.pyplot.tight_layout()
+    SavePath = os.path.join(save, f"T6_Bar{attrobute}.png")
+    matplotlib.pyplot.savefig(SavePath, dpi=150)
+    matplotlib.pyplot.close()
+    print(f"{attrobute} BAR GRAPH SAVED -> {SavePath}")
 
 #Gap comparison
 
 def gap_comparison(gap: pandas.DataFrame, save:str=None):
     #fix ts
 
-    attrobutes = sorted(gap["attrobute"].unique())
-    models = [m for m in config.BASELINE_MODELS if m in gap["model"].unique()]
+    attrobutes = sorted(gap["attribute"].unique())
+    models = [m for m in config.BASELINE_MODELS + [f"tgt_{v}" for v in config.TRANSFORMMERS] if m in gap["model"].unique()]
 
     x = numpy.arange(len(attrobutes))
 
-    figure, ax = matplotlib.pyplot.subplots(figsize = (max, len(attrobutes) * 3, 6))
+    figure, ax = matplotlib.pyplot.subplots(figsize=(max(8, len(attrobutes) * 3), 6))
 
     for i, model in enumerate(models):
         values = []
         for attrobute in attrobutes:
-            row = gap[gap["model"] == model] & (gap["attrobute"] == attrobute)
+            row = gap[(gap["model"] == model) & (gap["attribute"] == attrobute)]
             if len(row):
                 values.append(row["auroc_gap"].values[0])
             else:
                 values.append(0)
-            offset = (i - len(models) / 2 + 0.5) * .8 / len(models)
-            ax.bar(x+offset, values, (.8/len(models)), label=model, alpha=.8)
+        offset = (i - len(models) / 2 + 0.5) * .8 / len(models)
+        ax.bar(x+offset, values, (.8/len(models)), label=model, alpha=.8)
     ax.set_xlabel("Demographic Attribute", fontsize=12)
     ax.set_ylabel("AUROC Gap (max - min)", fontsize=13)
     ax.set_title("Fairness Gap Comparison Across Models", fontsize=13)

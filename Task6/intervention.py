@@ -6,16 +6,16 @@ from sklearn.linear_model import LogisticRegression
 import Task6.config as config
 
 def FindBestModel(metrics: pandas.DataFrame) -> dict:
-    overall =  metrics[metrics["model"] == "overall"].copy()
+    overall = metrics[metrics["subgroup"] == "overall"].copy()
 
     BaslineRows = overall[overall["model"].isin(config.BASELINE_MODELS)]
-    TGTRows = overall[overall["model"].str.startswith("TGT")]
+    TGTRows = overall[overall["model"].str.startswith("tgt_")]
 
     BestBaseline = BaslineRows.sort_values("auroc", ascending=False).iloc[0]["model"]
     BestTGT = TGTRows.sort_values("auroc", ascending=False).iloc[0]["model"]
 
     print(f"Best Baseline: {BestBaseline}\nBest TGT: {BestTGT}")
-    return {"best_baseline": BestBaseline, "BestTGT": BestTGT}
+    return {"best_baseline": BestBaseline, "best_tgt": BestTGT}
 
 
 #Intervention no. 1 -> threshold tuneung: find threshold that maximises the model in questions F1 score
@@ -43,14 +43,11 @@ def ThreshTune(y_true: numpy.ndarray, y_prob: numpy.ndarray, masks: dict) -> pan
         if len(set(sub_t)) < 2:
             continue
 
-        SubgOpThresh = BestF1Thresh(sub_t, sub_t)
+        SubgOpThresh = BestF1Thresh(sub_t, sub_p)
 
-        if sub_p >= globalThresh:
-            GlobalPreds = 1
-        else:
-            GlobalPreds = 0
+        GlobalPreds = (sub_p >= globalThresh).astype(int)
 
-        TPRglobal = GlobalPreds[sub_t==1].mean() if (sub_t == 1).sub > 0 else 0
+        TPRglobal = GlobalPreds[sub_t==1].mean() if (sub_t == 1).sum() > 0 else 0
 
         TunedPreds = (sub_p >= SubgOpThresh).astype(int)
         TunedTPR = TunedPreds[sub_t == 1].mean() if (sub_t == 1).sum() > 0 else 0
@@ -71,15 +68,15 @@ def ThreshTune(y_true: numpy.ndarray, y_prob: numpy.ndarray, masks: dict) -> pan
             "f1_tuned":       round(f1_tuned, 4)
         })
 
-        datafram = pandas.DataFrame(rows)
+    datafram = pandas.DataFrame(rows)
 
         #Output Gap summarie
-        if len(datafram) >= 2:
-            TPRgapBefore = datafram["tpr_global"].max() - datafram["tpr_global"].min()
-            TPRgapPost = datafram["TundedTPR"].max - datafram["TunedTPR"].min()
-            print(f"{config.AG}TPR GAP BEFORE: {TPRgapBefore:.4f}{config.AG}\n{config.AG}TPR GAP AFTER: {TPRgapPost}{config.AG}\n{config.BAG} REDUCTION: {TPRgapBefore - TPRgapPost}{config.BAG}")
+    if len(datafram) >= 2:
+        TPRgapBefore = datafram["tpr_global"].max() - datafram["tpr_global"].min()
+        TPRgapPost = datafram["tpr_tuned"].max() - datafram["tpr_tuned"].min()
+        print(f"{config.AG}TPR GAP BEFORE: {TPRgapBefore:.4f}{config.AG}\n{config.AG}TPR GAP AFTER: {TPRgapPost}{config.AG}\n{config.BAG} REDUCTION: {TPRgapBefore - TPRgapPost}{config.BAG}")
 
-        return datafram
+    return datafram
 
 #intervention numero dos: Platt recalibration: Fit a logistic regression (Platt scaling) per subgroup to recalibrate probabilities, then re-measure AUROC / AUPRC.
 def PlattRecal(y_true: numpy.ndarray, y_prob: numpy.ndarray, masks:dict) -> pandas.DataFrame:
@@ -114,7 +111,7 @@ def PlattRecal(y_true: numpy.ndarray, y_prob: numpy.ndarray, masks:dict) -> pand
             "orig_auprc":   round(OGAUPRC, 4),
             "recal_auprc":  round(prcRecall, 4),
         })
-        return pandas.DataFrame(rows)
+    return pandas.DataFrame(rows)
 
 def ExecuteInterns(model: str, y_true: numpy.ndarray, y_prob:numpy.ndarray, masks: dict) -> dict:
     print(f"{config.BAG}\nIntervention on: {model}\n{config.BAG}")
