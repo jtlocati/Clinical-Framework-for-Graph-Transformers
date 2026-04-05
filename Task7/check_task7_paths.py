@@ -9,6 +9,12 @@ OLD_FLAT_PATHS = {
     "Task7/results/race_counts.csv": "Task7/results/counts/race_counts.csv",
     "Task7/results/race_intervention_weights.csv": "Task7/results/counts/race_intervention_weights.csv",
     "Task7/results/sex_counts.csv": "Task7/results/counts/sex_counts.csv",
+    "Task7/results/task7_cross_seed_summary.csv": "Task7/results/cross_seed_summaries/task7_cross_seed_summary.csv",
+    "Task7/results/TGTFull_race_weighted_cap10_vs_original_disparity_summary.csv": "Task7/results/cross_seed_summaries/TGTFull_race_weighted_cap10_vs_original_disparity_summary.csv",
+    "Task7/results/TGTFull_race_weighted_cap10_vs_original_overall_summary.csv": "Task7/results/cross_seed_summaries/TGTFull_race_weighted_cap10_vs_original_overall_summary.csv",
+    "Task7/results/task7_intervention_comparison.csv": "Task7/results/final_tables/task7_intervention_comparison.csv",
+    "Task7/results/task7_intervention_summary.txt": "Task7/results/notes/task7_intervention_summary.txt",
+    "Task7/results/LSTM_seed42_before_after_notes.txt": "Task7/results/notes/LSTM_seed42_before_after_notes.txt",
 }
 
 EXPECTED_WRITES = {

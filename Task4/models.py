@@ -380,7 +380,94 @@ class PretrainedTST(nn.Module):
         pooled = h.mean(dim=1) # (B, d)  mean‑pool over time
         return self.head(pooled).squeeze(-1)
 
+# TGT
+class TGTModel(nn.Module):
+    def __init__(self, c: config.TGTConfig = None):
+        super().__init__()
+        c = c or config.TGTConfig()
+        self.c = c
 
+        input_dim = config.NumberOfFeatures * 2
+
+        self.proj = nn.Linear(input_dim, c.d_model)
+        self.pe = SinusoidalPE(c.d_model, max_len=config.ObservionWindow)
+
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=c.d_model,
+            nhead=c.nhead,
+            dim_feedforward=c.dim_feedforward,
+            dropout=c.dropout,
+            batch_first=True,
+            activation="gelu",
+        )
+        self.encoder = nn.TransformerEncoder(encoder_layer, num_layers=c.num_layers)
+
+        self.head = nn.Sequential(
+            nn.LayerNorm(c.d_model),
+            nn.Dropout(c.dropout),
+            nn.Linear(c.d_model, 1),
+        )
+
+    def _clinical_groups(self, num_features):
+        return {
+            "cardiovascular": [0, 1, 2, 3],# heart_rate, sbp, dbp, mbp
+            "respiratory": [4, 5, 6], # resp_rate, temperature, spo2
+            "metabolic": [7, 9, 10, 12, 13, 20, 23],# glucose, aniongap, bicarbonate, calcium, chloride, potassium, sodium
+            "renal": [11, 14],# bun, creatinine
+            "hematologic": [16, 17, 19, 21, 22, 24],# hematocrit, hemoglobin, platelet, ptt, inr, wbc
+            "hepatic_nutrition": [8],# albumin
+            "perfusion": [18],# lactate
+            "lab_glucose": [15],# glucose_lab
+        }
+
+    def _build_adj(self, missing_mask_one_patient):
+        T, F = missing_mask_one_patient.shape
+        adj = torch.zeros((T, T), dtype=torch.bool, device=missing_mask_one_patient.device)
+
+        # always allow self-attention
+        adj.fill_diagonal_(True)
+
+        # temporal edges
+        if self.c.edge_mode in {"temporal_only", "both"}:
+            for t in range(T - 1):
+                adj[t, t + 1] = True
+                adj[t + 1, t] = True
+
+        # clinical edges
+        if self.c.edge_mode in {"clinical_only", "both"}:
+            clinical_groups = self._clinical_groups(F)
+            for _, idxs in clinical_groups.items():
+                present = (missing_mask_one_patient[:, idxs].sum(dim=1) > 0)  # (T,)
+                present_idx = torch.where(present)[0]
+
+                for i in range(len(present_idx)):
+                    for j in range(i + 1, len(present_idx)):
+                        t1 = present_idx[i].item()
+                        t2 = present_idx[j].item()
+                        adj[t1, t2] = True
+                        adj[t2, t1] = True
+
+        return adj
+
+    def forward(self, x, mask):
+        inp = torch.cat([x, mask], dim=-1) #(B,T,2F)
+        h = self.proj(inp) #(B,T,d)
+        h = self.pe(h) #(B,T,d)
+
+        outputs = []
+        for i in range(h.size(0)):
+            h_i = h[i:i+1] #(1,T,d)
+            mask_i = mask[i] #(T,F)
+
+            adj = self._build_adj(mask_i) #(T,T), True = allowed
+            attn_mask = ~adj #True = blocked for transformer
+
+            h_i = self.encoder(h_i, mask=attn_mask)
+            outputs.append(h_i)
+
+        h = torch.cat(outputs, dim=0) #(B,T,d)
+        pooled = h.mean(dim=1) #(B,d)
+        return self.head(pooled).squeeze(-1)
 
 #  Model registry (for the experiment runner)
 
@@ -405,5 +492,13 @@ def get_model(name: str, device: torch.device = None):
     elif name_lower in ("pretrainedtst", "pretrainedtimeseriestransformer"):
         # return pretraining model; caller must handle 2‑phase
         return PretrainedTSTForPretraining().to(device), True
+    elif name_lower in ("tgttemporal", "tgttemporalonly"):
+        return TGTModel(config.TGTConfig(edge_mode="temporal_only")).to(device), False
+    elif name_lower in ("tgtclinical", "tgtclinicalonly"):
+        return TGTModel(config.TGTConfig(edge_mode="clinical_only")).to(device), False
+    elif name_lower in ("tgtfull", "tgtboth"):
+        return TGTModel(config.TGTConfig(edge_mode="both")).to(device), False
+    elif name_lower in ("tgt", "temporalgraphtransformer"):
+        return TGTModel().to(device), False
     else:
         raise ValueError(f"Unknown model: {name}")

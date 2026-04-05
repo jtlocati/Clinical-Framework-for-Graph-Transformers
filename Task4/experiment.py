@@ -6,26 +6,29 @@ Handles:
   - Metric computation (AUROC, AUPRC)
 """
 
-import time
-import numpy
-import torch
-from torch.optim import AdamW
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import roc_auc_score, average_precision_score
-import lightgbm as lgb
 import math
+import time
+from pathlib import Path
 
-import Task4.config as config
-from Task4.models import get_model, PretrainedTST, PretrainedTSTForPretraining
-from Task4.dataset import  make_seq_loaders, make_flat_data
+import numpy
+import pandas as pd
+import torch
+import lightgbm as lgb
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import average_precision_score, roc_auc_score
+from torch.optim import AdamW
 from torch.optim.lr_scheduler import LambdaLR
 
-#metrics
+import Task4.config as config
+from Task4.dataset import make_flat_data, make_seq_loaders
+from Task4.models import PretrainedTST, PretrainedTSTForPretraining, get_model
+
+
 def compute_metrics(y_true: numpy.array, y_prob: numpy.ndarray) -> dict:
     #Return AUROC and AUPRC
-    return{"auroc": roc_auc_score(y_true, y_prob), "auprc": average_precision_score(y_true, y_prob),}
+    return {"auroc": roc_auc_score(y_true, y_prob), "auprc": average_precision_score(y_true, y_prob)}
 
-#Traditional Models:
+
 def train_logistic_regression(flat_data: dict, seed: int) -> dict:
     #Logistic Regression on flattened summary features.
     X_tr, y_tr = flat_data["train"].as_arrays()
@@ -33,17 +36,19 @@ def train_logistic_regression(flat_data: dict, seed: int) -> dict:
     X_te, y_te = flat_data["test"].as_arrays()
 
     model = LogisticRegression(
-        max_iter=1000, C=1.0, solver="lbfgs",
-        random_state=seed, n_jobs=-1,
+        max_iter=1000,
+        C=1.0,
+        solver="lbfgs",
+        random_state=seed,
+        n_jobs=-1,
     )
     model.fit(X_tr, y_tr)
 
-    # predictions
-    p_val  = model.predict_proba(X_val)[:, 1]
+    p_val = model.predict_proba(X_val)[:, 1]
     p_test = model.predict_proba(X_te)[:, 1]
 
     return {
-        "val":  compute_metrics(y_val, p_val),
+        "val": compute_metrics(y_val, p_val),
         "test": compute_metrics(y_te, p_test),
         "test_outputs": {
             "ids": flat_data["test"].ids,
@@ -62,19 +67,26 @@ def train_lightgbm(flat_data: dict, seed: int) -> dict:
     params = {**config.LGBM_PARAMS, "seed": seed}
 
     dtrain = lgb.Dataset(X_tr, label=y_tr)
-    dval   = lgb.Dataset(X_val, label=y_val, reference=dtrain)
+    dval = lgb.Dataset(X_val, label=y_val, reference=dtrain)
 
     callbacks = [
         lgb.early_stopping(stopping_rounds=config.EARLY_STOP),
         lgb.log_evaluation(period=100),
     ]
-    model = lgb.train(params, dtrain, num_boost_round=config.ROUNDS, valid_sets=[dval], valid_names=["val"], callbacks=callbacks,)
+    model = lgb.train(
+        params,
+        dtrain,
+        num_boost_round=config.ROUNDS,
+        valid_sets=[dval],
+        valid_names=["val"],
+        callbacks=callbacks,
+    )
 
-    p_val  = model.predict(X_val)
+    p_val = model.predict(X_val)
     p_test = model.predict(X_te)
 
     return {
-        "val":  compute_metrics(y_val, p_val),
+        "val": compute_metrics(y_val, p_val),
         "test": compute_metrics(y_te, p_test),
         "test_outputs": {
             "ids": flat_data["test"].ids,
@@ -84,18 +96,58 @@ def train_lightgbm(flat_data: dict, seed: int) -> dict:
     }
 
 
-#  Neural model training loop
 def _get_warmup_cosine_scheduler(optimizer, warmup_epochs, total_epochs):
-#Linear warmup for `warmup_epochs`, then cosine decay to 0.
+    #Linear warmup for `warmup_epochs`, then cosine decay to 0.
     def lr_lambda(epoch):
         if epoch < warmup_epochs:
-            return (epoch + 1) / warmup_epochs # linear 0→1
+            return (epoch + 1) / warmup_epochs
         progress = (epoch - warmup_epochs) / max(total_epochs - warmup_epochs, 1)
-        return 0.5 * (1.0 + math.cos(math.pi * progress)) # cosine 1→0
+        return 0.5 * (1.0 + math.cos(math.pi * progress))
+
     return LambdaLR(optimizer, lr_lambda)
 
 
-def train_neural(model: torch.nn.Module, loaders: dict, tc: config.TrainConfig = None, device: str = "cuda") -> dict:
+def _load_race_lookup():
+    repo_root = Path(__file__).resolve().parents[1]
+    demo_path = repo_root / "Tests" / "outputs" / "Task2Demographics.csv"
+    demo = pd.read_csv(demo_path)
+    demo.columns = demo.columns.str.strip()
+    return dict(zip(demo["stay_id"], demo["race"]))
+
+
+def _make_race_weight_lookup(race_lookup: dict, max_weight: float = 10.0):
+    counts = {}
+    for race in race_lookup.values():
+        if race is None or race == "Multipule":
+            continue
+        counts[race] = counts.get(race, 0) + 1
+
+    if not counts:
+        return {}
+
+    total = sum(counts.values())
+    return {race: min(total / count, max_weight) for race, count in counts.items()}
+
+
+def _make_batch_race_weights(ids, race_lookup: dict, race_weight_lookup: dict):
+    if torch.is_tensor(ids):
+        id_values = ids.detach().cpu().tolist()
+    else:
+        id_values = list(ids)
+
+    weights = []
+    for sid in id_values:
+        race = race_lookup.get(int(sid), None)
+        weights.append(race_weight_lookup.get(race, 1.0))
+    return torch.tensor(weights, dtype=torch.float32)
+
+
+def train_neural(model: torch.nn.Module,
+                 loaders: dict,
+                 tc: config.TrainConfig = None,
+                 device: str = "cuda",
+                 loss_weighting_strategy: str = None,
+                 max_loss_weight: float = 10.0) -> dict:
     """
     Standard training loop with:
       - Binary loss
@@ -106,15 +158,23 @@ def train_neural(model: torch.nn.Module, loaders: dict, tc: config.TrainConfig =
     device = torch.device(device if torch.cuda.is_available() else "cpu")
     model = model.to(device)
 
-    # class weight: cap pos_weight to prevent gradient explosion
+    use_race_weighted_loss = bool(loss_weighting_strategy) and loss_weighting_strategy.startswith("race_weighted")
+
     y_train = loaders["train"].dataset.y.numpy()
     raw_pw = (y_train == 0).sum() / max((y_train == 1).sum(), 1)
     capped_pw = min(raw_pw, tc.max_pos_weight)
     pos_weight = torch.tensor([capped_pw], dtype=torch.float32, device=device)
     print(f"    pos_weight: raw={raw_pw:.2f}, capped={capped_pw:.2f}")
-    criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
-    # optimizer + warmup-cosine scheduler
+    if use_race_weighted_loss:
+        criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight, reduction="none")
+        race_lookup = _load_race_lookup()
+        race_weight_lookup = _make_race_weight_lookup(race_lookup, max_weight=max_loss_weight)
+    else:
+        criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+        race_lookup = None
+        race_weight_lookup = None
+
     optimizer = AdamW(model.parameters(), lr=tc.Lr, weight_decay=tc.WeightDecay)
     scheduler = _get_warmup_cosine_scheduler(optimizer, tc.warmup_epochs, tc.epochs)
 
@@ -123,13 +183,19 @@ def train_neural(model: torch.nn.Module, loaders: dict, tc: config.TrainConfig =
     patience_counter = 0
 
     for epoch in range(1, tc.epochs + 1):
-        # train
         model.train()
         losses = []
-        for _, x, m, y in loaders["train"]:
+        for ids, x, m, y in loaders["train"]:
             x, m, y = x.to(device), m.to(device), y.float().to(device)
             logits = model(x, m)
-            loss = criterion(logits, y)
+
+            if use_race_weighted_loss:
+                per_sample_loss = criterion(logits, y)
+                batch_weights = _make_batch_race_weights(ids, race_lookup, race_weight_lookup).to(device)
+                loss = (per_sample_loss * batch_weights).mean()
+            else:
+                loss = criterion(logits, y)
+
             optimizer.zero_grad()
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
@@ -137,15 +203,16 @@ def train_neural(model: torch.nn.Module, loaders: dict, tc: config.TrainConfig =
             losses.append(loss.item())
         scheduler.step()
 
-        # validate
         val_metrics = evaluate_neural(model, loaders["val"], device)
         val_auroc = val_metrics["auroc"]
 
         cur_lr = optimizer.param_groups[0]["lr"]
         if epoch % 5 == 0 or epoch == 1:
-            print(f"    Epoch {epoch:3d}  loss={numpy.mean(losses):.4f}  "
-                  f"val_auroc={val_auroc:.4f}  val_auprc={val_metrics['auprc']:.4f}  "
-                  f"lr={cur_lr:.6f}")
+            print(
+                f"    Epoch {epoch:3d}  loss={numpy.mean(losses):.4f}  "
+                f"val_auroc={val_auroc:.4f}  val_auprc={val_metrics['auprc']:.4f}  "
+                f"lr={cur_lr:.6f}"
+            )
 
         if val_auroc > best_val_auroc:
             best_val_auroc = val_auroc
@@ -157,7 +224,6 @@ def train_neural(model: torch.nn.Module, loaders: dict, tc: config.TrainConfig =
                 print(f"    Early stop at epoch {epoch}  (best val_auroc={best_val_auroc:.4f})")
                 break
 
-    # restore best
     model.load_state_dict(best_state)
     model.to(device)
 
@@ -177,7 +243,7 @@ def train_neural(model: torch.nn.Module, loaders: dict, tc: config.TrainConfig =
     }
 
 
-def evaluate_neural(model: torch.nn.Module, loader, device, return_outputs: bool = False) -> dict:
+def evaluate_neural(model: torch.nn.Module, loader, device, return_outputs: bool = False):
     model.eval()
     all_ids, all_y, all_p = [], [], []
     with torch.no_grad():
@@ -191,6 +257,7 @@ def evaluate_neural(model: torch.nn.Module, loader, device, return_outputs: bool
                 all_ids.append(numpy.asarray(ids))
             all_y.append(y.numpy())
             all_p.append(probs)
+
     y_ids = numpy.concatenate(all_ids)
     y_true = numpy.concatenate(all_y)
     y_prob = numpy.concatenate(all_p)
@@ -207,11 +274,11 @@ def evaluate_neural(model: torch.nn.Module, loader, device, return_outputs: bool
     return metrics
 
 
-#  PretrainedTST two-phase training
-
-
 def train_pretrained_tst(pretrain_model: PretrainedTSTForPretraining,
-                         loaders: dict, device: str = "cuda") -> dict:
+                         loaders: dict,
+                         device: str = "cuda",
+                         loss_weighting_strategy: str = None,
+                         max_loss_weight: float = 10.0) -> dict:
     """
     Phase 1: Selfsupervised masked reconstruction pretraining
     Phase 2: Finetune encoder + classification head
@@ -220,7 +287,6 @@ def train_pretrained_tst(pretrain_model: PretrainedTSTForPretraining,
     device = torch.device(device if torch.cuda.is_available() else "cpu")
     pretrain_model = pretrain_model.to(device)
 
-    #  Phase 1: pretrain
     print("    Phase 1: Selfsupervised pretraining …")
     optimizer = AdamW(pretrain_model.parameters(), lr=pc.pretrain_lr)
     for epoch in range(1, pc.pretrain_epochs + 1):
@@ -237,15 +303,17 @@ def train_pretrained_tst(pretrain_model: PretrainedTSTForPretraining,
         if epoch % 10 == 0 or epoch == 1:
             print(f"      Pretrain epoch {epoch:3d}  recon_loss={numpy.mean(losses):.4f}")
 
-    #  Phase 2: fine-tune
     print("    Phase 2: Fine-tuning for classification …")
-    encoder = pretrain_model.encoder  # extract pretrained encoder
+    encoder = pretrain_model.encoder
     ft_model = PretrainedTST(encoder, pc).to(device)
 
-    return train_neural(ft_model, loaders, device=str(device))
-
-
-# Master experiment-runner
+    return train_neural(
+        ft_model,
+        loaders,
+        device=str(device),
+        loss_weighting_strategy=loss_weighting_strategy,
+        max_loss_weight=max_loss_weight,
+    )
 
 
 ALL_MODELS = [
@@ -256,10 +324,21 @@ ALL_MODELS = [
     "ChronoFormer",
     "PatchTST",
     "PretrainedTST",
+    "TGTTemporal",
+    "TGTClinical",
+    "TGTFull",
+    "TGT",
 ]
 
 
-def run_single(model_name: str, splits: dict, seed: int, device: str = "cuda") -> dict:
+def run_single(model_name: str,
+               splits: dict,
+               seed: int,
+               device: str = "cuda",
+               sampling_strategy: str = None,
+               max_sampling_weight: float = 10.0,
+               loss_weighting_strategy: str = None,
+               max_loss_weight: float = 10.0) -> dict:
     #Run one model on one seed. Returns val/test metrics plus test-set outputs.
 
     print(f"\n  ▶ {model_name}  (seed={seed})")
@@ -274,15 +353,36 @@ def run_single(model_name: str, splits: dict, seed: int, device: str = "cuda") -
         result = train_lightgbm(flat, seed)
 
     elif model_name == "PretrainedTST":
-        loaders = make_seq_loaders(splits, num_workers=0)
+        loaders = make_seq_loaders(
+            splits,
+            num_workers=0,
+            sampling_strategy=sampling_strategy,
+            max_sampling_weight=max_sampling_weight,
+        )
         pretrain_model, _ = get_model("PretrainedTST", device=torch.device(device))
-        result = train_pretrained_tst(pretrain_model, loaders, device)
+        result = train_pretrained_tst(
+            pretrain_model,
+            loaders,
+            device,
+            loss_weighting_strategy=loss_weighting_strategy,
+            max_loss_weight=max_loss_weight,
+        )
 
     else:
-        # LSTM, StandardTransformer, ChronoFormer, PatchTST
-        loaders = make_seq_loaders(splits, num_workers=0)
+        loaders = make_seq_loaders(
+            splits,
+            num_workers=0,
+            sampling_strategy=sampling_strategy,
+            max_sampling_weight=max_sampling_weight,
+        )
         model, _ = get_model(model_name, device=torch.device(device))
-        result = train_neural(model, loaders, device=device)
+        result = train_neural(
+            model,
+            loaders,
+            device=device,
+            loss_weighting_strategy=loss_weighting_strategy,
+            max_loss_weight=max_loss_weight,
+        )
 
     elapsed = time.time() - t0
     print(f"✅ Done in {elapsed:.1f}s  |  "

@@ -89,6 +89,15 @@ class PretrainedTSTConfig:
     pretrain_epochs: int = 30
     pretrain_lr: float = 1e-3
 
+@dataclass
+class TGTConfig:
+    d_model: int = 64
+    nhead: int = 4
+    num_layers: int = 2
+    dim_feedforward: int = 128
+    dropout: float = 0.2
+    edge_mode: str = "both"   # temporal_only, clinical_only, both
+
 #Light GBM params
 LGBM_PARAMS = {"objective": "binary","metric": ["auc", "average_precision"],"learning_rate": 0.05,"num_leaves": 63,"max_depth": 7,"min_child_samples": 50,"subsample": 0.8,"colsample_bytree": 0.8,"verbose": -1,"n_jobs": -1,}
 ROUNDS = 1000
