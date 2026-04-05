@@ -1,0 +1,2 @@
+model,base_intervention,seed,selected_threshold,test_auroc,test_auprc,sex_tpr_gap,sex_precision_gap,age_tpr_gap,age_precision_gap,race_tpr_gap,race_precision_gap
+TGTFull,race_weighted_cap10,42,0.45,0.814326,0.432991,0.012309,0.012918,0.077391,0.111146,0.3,0.111446

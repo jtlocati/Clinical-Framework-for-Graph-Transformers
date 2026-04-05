@@ -1,0 +1,53 @@
+Task 7 intervention summary
+
+Models tested:
+- LSTM
+- TGTFull
+
+Interventions tested:
+- original
+- race_balanced
+- race_weighted_cap10
+- race_weighted_cap5
+
+Main findings:
+
+1. LSTM (seed 42 tuning results)
+- Race-balanced sampling reduced race disparity more directly, but overall predictive performance dropped noticeably.
+- Race-weighted loss with cap 10 preserved performance better than race-balanced sampling, but fairness effects were mixed.
+- Race-weighted loss with cap 5 gave the best overall tradeoff for LSTM.
+- For LSTM with cap 5, test AUPRC stayed almost unchanged relative to the original model, while sex AUROC gap, age gaps, and race gaps all improved slightly or substantially.
+- The only clear worsening for LSTM cap 5 was a small increase in sex AUPRC gap.
+- Overall, the strongest Task 7 result for the baseline model is LSTM with race-weighted loss and max_loss_weight = 5.0.
+- LSTM race_weighted_cap5 was validated across seeds 42, 123, and 2024 and remained the strongest baseline intervention setting. Across seeds, it achieved mean AUROC 0.825907 and mean AUPRC 0.471632, with low average sex AUROC disparity and moderate age/race disparity. This confirms that the cap-5 weighted-loss intervention is a stable and defensible fairness-performance tradeoff for the baseline model.
+
+2. TGTFull (cross-seed results)
+- Race-balanced sampling was unfavorable overall and is not the preferred intervention for TGTFull.
+- Race-weighted loss with cap 5 preserved AUPRC slightly better than cap 10 on seed 42, but fairness became substantially worse, especially for race disparity.
+- Race-weighted loss with cap 10 was the strongest TGTFull intervention setting and was evaluated across seeds 42, 123, and 2024.
+- Across the three seeds, race-weighted cap 10 caused a modest average drop in overall AUROC/AUPRC compared with the original TGTFull model.
+- However, the average race AUROC gap stayed essentially unchanged, and the average race AUPRC gap improved slightly.
+- Age and sex disparity did not improve consistently and were worse on average.
+- Overall, TGTFull appears more intervention-sensitive and less uniformly improvable than LSTM, but race-weighted cap 10 is still the most defensible fairness intervention for the graph-transformer model.
+- We also tested race-weighted loss with cap 15 on seed 42. It did not improve on cap 10: overall performance remained similarly reduced, while race disparity was slightly worse, so cap 15 was rejected.
+
+Cross-seed TGTFull summary:
+- Original mean AUROC: 0.832797
+- Original mean AUPRC: 0.482497
+- Race-weighted cap10 mean AUROC: 0.824505
+- Race-weighted cap10 mean AUPRC: 0.472576
+
+- Original mean race AUROC gap: 0.129185
+- Race-weighted cap10 mean race AUROC gap: 0.129093
+
+- Original mean race AUPRC gap: 0.236523
+- Race-weighted cap10 mean race AUPRC gap: 0.231847
+
+Overall conclusion:
+- Interventions produced real fairness-versus-performance tradeoffs.
+- LSTM responded more favorably to intervention than TGTFull.
+- Weighted loss was generally less damaging to overall performance than race-balanced sampling.
+- For LSTM, a mild weighted-loss cap of 5.0 is the best candidate setting.
+- For TGTFull, race-weighted cap 10 is the best intervention tested so far, but its benefits are narrow and mainly concentrated in race AUPRC disparity rather than broad fairness improvement.
+- We also evaluated post-hoc global threshold tuning for TGTFull_race_weighted_cap10 across seeds 42, 123, and 2024 using thresholds 0.40, 0.45, and 0.50. Across seeds, 0.45 gave the best overall fairness-performance compromise relative to the default 0.50, improving F1 and reducing several disparity measures while only modestly lowering overall accuracy.
+- We additionally tested groupwise calibration on seed 42 for sex, age group, and race. Groupwise calibration improved Brier score, indicating better probability calibration, but it did not outperform the threshold-tuned global-threshold approach on the overall fairness-performance tradeoff. As a result, global threshold tuning remained the preferred post-hoc method for TGTFull.
