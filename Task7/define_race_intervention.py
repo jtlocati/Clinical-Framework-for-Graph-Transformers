@@ -27,6 +27,8 @@ df = pd.DataFrame(
 print(df.to_string(index=False))
 print("\nExcluded groups from direct weighting:", excluded_groups)
 
-out_path = REPO_ROOT / "Task7" / "results" / "race_intervention_weights.csv"
+out_dir = REPO_ROOT / "Task7" / "results" / "counts"
+out_dir.mkdir(parents=True, exist_ok=True)
+out_path = out_dir / "race_intervention_weights.csv"
 df.to_csv(out_path, index=False)
 print(f"\nSaved: {out_path}")

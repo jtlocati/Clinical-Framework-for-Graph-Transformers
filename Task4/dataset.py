@@ -23,8 +23,9 @@ class SeqDataset(Dataset):
 
 class FlatDataset:
 
-    def __init__(self, X: numpy.ndarray, M: numpy.ndarray, y: numpy.ndarray):
+    def __init__(self, X: numpy.ndarray, M: numpy.ndarray, y: numpy.ndarray, ids: numpy.ndarray):
         self.y = y
+        self.ids = ids
         self.X_flat = self._summarise(X, M)
 
     @staticmethod
@@ -73,6 +74,6 @@ def make_flat_data(splits: dict) -> dict:
     flat = {}
     for name in ["train", "val", "test"]:
         flat[name] = FlatDataset(
-            splits[name]["X"], splits[name]["M"], splits[name]["y"]
+            splits[name]["X"], splits[name]["M"], splits[name]["y"], splits[name]["ids"]
         )
     return flat

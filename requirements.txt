@@ -1,10 +1,8 @@
-#Used for packages not included within YAIB's requirements.txt
+# Used for packages not included within YAIB's requirements.txt
 
-pandas
-scikit-learn
 google-cloud-bigquery
-pandas>=1.5
-numpy>=1.23
-scikit-learn>=1.2
 lightgbm>=3.3
-torch>=2.0matplotlib
+numpy>=1.23
+pandas>=1.5
+scikit-learn>=1.2
+torch>=2.0

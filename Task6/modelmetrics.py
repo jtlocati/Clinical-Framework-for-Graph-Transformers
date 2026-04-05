@@ -16,7 +16,7 @@ class GraphDS(torch.utils.data.Dataset):
         self.Y = torch.from_numpy(y).long()
 
     def __len__(self):
-        return len(self.y)
+        return len(self.Y)
     
     def __getitem__(self, idx):
         return self.X[idx], self.Y[idx]
@@ -126,10 +126,12 @@ def CollectMetrics(splits: dict, seed) -> dict:
     for name in Task6.config.BASELINE_MODELS:
         print(f"{Task6.config.BAG}\nTraining: {name}\n{Task6.config.BAG}")
         t0 = time.time()
-        _, y_true, y_prob = run_single(name, splits, seed, device="cpu")
+        result = run_single(name, splits, seed, device="cpu")
+        y_true = result["test_outputs"]["y_true"]
+        y_prob = result["test_outputs"]["y_prob"]
 
 
-        print(f"{Task6.config.BAG}  TRAINING FOR {name} DONE\n  Time {time.time() - - t0 :.1}\nAUROC: {sklearn.metrics.roc_auc_score(y_true, y_prob):.4f}\n{Task6.config.BAG}")
+        print(f"{Task6.config.BAG}  TRAINING FOR {name} DONE\n  Time {time.time() - t0:.1f}\nAUROC: {sklearn.metrics.roc_auc_score(y_true, y_prob):.4f}\n{Task6.config.BAG}")
 
         predictions[name] = (y_true, y_prob)
 
@@ -140,8 +142,6 @@ def CollectMetrics(splits: dict, seed) -> dict:
 
         y_true, y_prob = TAPTGT(TGT, splits, seed)
         print(f"{Task6.config.BAG}\n    DONE IN {time.time() - t0:.1f}\n    AUROC: {sklearn.metrics.roc_auc_score(y_true, y_prob):.4f}")
-        predictions[name] = (y_true, y_prob)
+        predictions[label] = (y_true, y_prob)
 
     return predictions
-
-

@@ -2,7 +2,6 @@
 import numpy
 import pandas
 from pathlib import Path
-from sklearn.metrics import roc_auc_score
 from google.cloud import bigquery
 
 #Change to envion varible
@@ -59,7 +58,7 @@ new_table["age_group"] = pandas.cut(
 )
 
 row_level_demo = new_table[["stay_id", "age", "sex", "race", "label", "age_group"]].copy()
-row_level_path = OUT_DIRECTORY / "mimic_row_level_demographics.csv"
+row_level_path = OUT_DIRECTORY / "Task2Demographics.csv"
 row_level_demo.to_csv(row_level_path, index=False)
 print(f"Saved row-level demographics to: {row_level_path}")
 
@@ -120,10 +119,10 @@ print(dist.loc[~dist["enough_samples_in30"], ["group", "count"]])
 
 #AUC subgruop calculations
 
-#use placeholders till model predictions exsist
-
+#Task 2 does not have model predictions yet, so this table only records
+#which subgroups are large enough and class-balanced enough for later
+#fairness evaluation once predictions exist.
 y_true = new_table["label"].values
-y_prob = numpy.random.rand(len(new_table)) #PLACEHOLDER
 
 subgroup_results = []
 
@@ -139,14 +138,11 @@ for name, mask in simple_label.items():
         continue
     
     sub_y_true = y_true[mask_array]
-    sub_y_prob = y_prob[mask_array]
-
-    if len(set(sub_y_true)) < 3:
+    if len(set(sub_y_true)) < 2:
         subgroup_results.append({"group": name, "count": n, "AUC": None, "note": "Single class"})
         continue
-    auc = roc_auc_score(sub_y_true, sub_y_prob)
 
-    subgroup_results.append({"group": name, "count": n, "AUC": auc, "note": "ok"})
+    subgroup_results.append({"group": name, "count": n, "AUC": None, "note": "Predictions unavailable"})
 
 auc_table = pandas.DataFrame(subgroup_results)
 
@@ -156,6 +152,7 @@ auc_table.to_csv(auc_path, index=False)
 
 print(f"\nSaved AUC table: {auc_path}")
 
+#Task 2 does not require computing AUC or fairness metrics yet.
 print("=======================================================AUC table=======================================================")   
 
 print(f"\nSubgroup AUC table results\n{auc_table}")
