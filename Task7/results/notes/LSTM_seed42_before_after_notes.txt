@@ -1,0 +1,17 @@
+LSTM seed 42, race-balanced sampling:
+
+Overall performance decreased relative to the original model:
+- test AUROC: 0.8248 -> 0.8163
+- test AUPRC: 0.4462 -> 0.4170
+
+Fairness effects were mixed:
+- Race disparity improved:
+  - AUROC gap: 0.1838 -> 0.1639
+  - AUPRC gap: 0.2513 -> 0.2005
+- Sex disparity changed slightly:
+  - AUROC gap improved slightly
+  - AUPRC gap worsened
+- Age disparity was essentially unchanged to slightly worse
+
+Conclusion:
+Race-balanced sampling reduced race disparity, but at the cost of lower overall predictive performance and without consistent fairness improvement across all attributes.

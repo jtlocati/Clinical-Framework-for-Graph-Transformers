@@ -1,0 +1,3 @@
+Selected tuned global threshold for TGTFull_race_weighted_cap10 (seed 42): 0.45
+
+Reason: threshold 0.45 preserved overall F1 relative to 0.40, improved overall F1 over the default 0.50, and produced a better overall fairness-performance balance than 0.50, especially for race precision gap and age TPR gap.

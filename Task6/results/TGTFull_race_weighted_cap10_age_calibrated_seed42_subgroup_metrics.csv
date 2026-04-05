@@ -1,0 +1,14 @@
+model,seed,group,count,positives,negatives,AUROC,AUPRC,note
+TGTFull_race_weighted_cap10_age_calibrated,42,overall,6182,848,5334,0.8116136868504645,0.4348360393066249,ok
+TGTFull_race_weighted_cap10_age_calibrated,42,sex_F,2705,356,2349,0.8087137247023596,0.43466542486810333,ok
+TGTFull_race_weighted_cap10_age_calibrated,42,sex_M,3477,492,2985,0.8137298960929307,0.4370194780697405,ok
+TGTFull_race_weighted_cap10_age_calibrated,42,age_<40,471,30,441,0.8878306878306879,0.371331849369228,ok
+TGTFull_race_weighted_cap10_age_calibrated,42,age_40-65,2132,231,1901,0.8412933725926887,0.4757633961936656,ok
+TGTFull_race_weighted_cap10_age_calibrated,42,age_65+,3579,587,2992,0.7867214331915204,0.4224990744149519,ok
+TGTFull_race_weighted_cap10_age_calibrated,42,race_Asian,182,30,152,0.730701754385965,0.36558396802991655,ok
+TGTFull_race_weighted_cap10_age_calibrated,42,race_Black,682,87,595,0.817251038346373,0.4782468539700618,ok
+TGTFull_race_weighted_cap10_age_calibrated,42,race_Hispanic,239,29,210,0.8586206896551725,0.5183637437273608,ok
+TGTFull_race_weighted_cap10_age_calibrated,42,race_Multipule,2,0,2,,,Too few samples
+TGTFull_race_weighted_cap10_age_calibrated,42,race_Other,447,60,387,0.8696382428940568,0.5997904206963998,ok
+TGTFull_race_weighted_cap10_age_calibrated,42,race_Unknown,580,119,461,0.8141234801946808,0.5613213217829414,ok
+TGTFull_race_weighted_cap10_age_calibrated,42,race_White,4050,523,3527,0.8047555568325417,0.38636394405680347,ok
