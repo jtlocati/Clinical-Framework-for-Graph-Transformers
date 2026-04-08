@@ -98,25 +98,66 @@ def _load_race_lookup():
     return dict(zip(demo["stay_id"], demo["race"]))
 
 
-def _make_batch_race_weights(ids, max_weight: float = 10.0):
+def _compute_train_race_weights(train_ids, max_weight: float = 10.0):
     race_lookup = _load_race_lookup()
 
-    capped_weights = {
-        "White": 1.526863,
-        "Black": 9.378254,
-        "Unknown": 9.901691,
-        "Other": 10.0,
-        "Hispanic": 10.0,
-        "Asian": 10.0,
-    }
+    counts = {}
+    for sid in train_ids:
+        race = race_lookup.get(int(sid), None)
+        if race is None or race == "Multipule":
+            continue
+        counts[race] = counts.get(race, 0) + 1
 
+    if not counts:
+        return {}
+
+    total = sum(counts.values())
+    raw_weights = {race: total / count for race, count in counts.items()}
+    return {race: min(weight, max_weight) for race, weight in raw_weights.items()}
+
+
+def _compute_train_id_weight_lookup(train_ids, max_weight: float = 10.0):
+    race_lookup = _load_race_lookup()
+    race_weight_lookup = _compute_train_race_weights(train_ids, max_weight=max_weight)
+
+    id_weight_lookup = {}
+    for sid in train_ids:
+        sid = int(sid)
+        race = race_lookup.get(sid, None)
+        id_weight_lookup[sid] = race_weight_lookup.get(race, 1.0)
+
+    return id_weight_lookup
+
+
+def _compute_train_id_race_lookup(train_ids):
+    race_lookup = _load_race_lookup()
+    return {int(sid): race_lookup.get(int(sid), None) for sid in train_ids}
+
+
+def _compute_batch_group_loss_variance(ids, per_sample_loss, id_group_lookup):
+    group_losses = {}
+    for sid, loss_val in zip(ids, per_sample_loss):
+        group = id_group_lookup.get(int(sid), None)
+        if group is None or group == "Multipule":
+            continue
+        group_losses.setdefault(group, []).append(loss_val)
+
+    group_means = []
+    for losses in group_losses.values():
+        if len(losses) == 0:
+            continue
+        group_means.append(torch.stack(losses).mean())
+
+    if len(group_means) < 2:
+        return per_sample_loss.new_tensor(0.0)
+
+    return torch.stack(group_means).var(unbiased=False)
+
+
+def _make_batch_sample_weights(ids, id_weight_lookup):
     weights = []
     for sid in ids:
-        race = race_lookup.get(int(sid), None)
-        if race in capped_weights:
-            weights.append(capped_weights[race])
-        else:
-            weights.append(1.0)
+        weights.append(id_weight_lookup.get(int(sid), 1.0))
 
     return torch.tensor(weights, dtype=torch.float32)
 
@@ -124,7 +165,8 @@ def _make_batch_race_weights(ids, max_weight: float = 10.0):
 def train_neural(model: nn.Module, loaders: dict, tc: config.TrainConfig = None,
                  device: str = "cuda",
                  loss_weighting_strategy: str = None,
-                 max_loss_weight: float = 10.0) -> dict:
+                 max_loss_weight: float = 10.0,
+                 subgroup_var_reg_strength: float = 0.0) -> dict:
     """
     Standard training loop with:
       - Binary loss
@@ -141,7 +183,14 @@ def train_neural(model: nn.Module, loaders: dict, tc: config.TrainConfig = None,
     capped_pw = min(raw_pw, tc.max_pos_weight)
     pos_weight = torch.tensor([capped_pw], dtype=torch.float32, device=device)
     print(f"    pos_weight: raw={raw_pw:.2f}, capped={capped_pw:.2f}")
-    if loss_weighting_strategy == "race_weighted":
+    train_id_weight_lookup = None
+    train_id_race_lookup = None
+    if loss_weighting_strategy in {"race_weighted", "train_race_weighted"}:
+        train_id_weight_lookup = _compute_train_id_weight_lookup(
+            loaders["train"].dataset.ids,
+            max_weight=max_loss_weight,
+        )
+        train_id_race_lookup = _compute_train_id_race_lookup(loaders["train"].dataset.ids)
         criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight, reduction="none")
     else:
         criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
@@ -162,10 +211,23 @@ def train_neural(model: nn.Module, loaders: dict, tc: config.TrainConfig = None,
             x, m, y = x.to(device), m.to(device), y.float().to(device)
             logits = model(x, m)
 
-            if loss_weighting_strategy == "race_weighted":
+            if loss_weighting_strategy in {"race_weighted", "train_race_weighted"}:
                 per_sample_loss = criterion(logits, y)
-                batch_weights = _make_batch_race_weights(ids, max_weight=max_loss_weight).to(device)
-                loss = (per_sample_loss * batch_weights).mean()
+                batch_weights = _make_batch_sample_weights(
+                    ids,
+                    train_id_weight_lookup,
+                ).to(device)
+                base_loss = (per_sample_loss * batch_weights).mean()
+
+                if subgroup_var_reg_strength > 0.0:
+                    var_loss = _compute_batch_group_loss_variance(
+                        ids,
+                        per_sample_loss,
+                        train_id_race_lookup,
+                    )
+                    loss = base_loss + subgroup_var_reg_strength * var_loss
+                else:
+                    loss = base_loss
             else:
                 loss = criterion(logits, y)
 
@@ -251,7 +313,11 @@ def evaluate_neural(model: nn.Module, loader, device, return_outputs: bool = Fal
 
 
 def train_pretrained_tst(pretrain_model: PretrainedTSTForPretraining,
-                         loaders: dict, device: str = "cuda") -> dict:
+                         loaders: dict,
+                         device: str = "cuda",
+                         loss_weighting_strategy: str = None,
+                         max_loss_weight: float = 10.0,
+                         subgroup_var_reg_strength: float = 0.0) -> dict:
     """
     Phase 1: SelFsupervised masked reconstruction pretraining
     Phase 2: Finetune encoder + classification head
@@ -263,23 +329,34 @@ def train_pretrained_tst(pretrain_model: PretrainedTSTForPretraining,
     #  Phase 1: pretrain 
     print("    Phase 1: Selfsupervised pretraining …")
     optimizer = AdamW(pretrain_model.parameters(), lr=pc.pretrain_lr)
-    for _, x, m, _ in loaders["train"]:
-        x, m = x.to(device), m.to(device)
-        loss = pretrain_model(x, m)
-        optimizer.zero_grad()
-        loss.backward()
-        nn.utils.clip_grad_norm_(pretrain_model.parameters(), 1.0)
-        optimizer.step()
-        losses.append(loss.item())
-    if epoch % 10 == 0 or epoch == 1:
-        print(f"      Pretrain epoch {epoch:3d}  recon_loss={np.mean(losses):.4f}")
+    for epoch in range(1, pc.pretrain_epochs + 1):
+        pretrain_model.train()
+        losses = []
+        for _, x, m, _ in loaders["train"]:
+            x, m = x.to(device), m.to(device)
+            loss = pretrain_model(x, m)
+            optimizer.zero_grad()
+            loss.backward()
+            nn.utils.clip_grad_norm_(pretrain_model.parameters(), 1.0)
+            optimizer.step()
+            losses.append(loss.item())
+
+        if epoch % 10 == 0 or epoch == 1:
+            print(f"      Pretrain epoch {epoch:3d}  recon_loss={np.mean(losses):.4f}")
 
     #  Phase 2: fine‑tune 
     print("    Phase 2: Fine‑tuning for classification …")
     encoder = pretrain_model.encoder #extract pretrained encoder
     ft_model = PretrainedTST(encoder, pc).to(device)
 
-    return train_neural(ft_model, loaders, device=str(device))
+    return train_neural(
+        ft_model,
+        loaders,
+        device=str(device),
+        loss_weighting_strategy=loss_weighting_strategy,
+        max_loss_weight=max_loss_weight,
+        subgroup_var_reg_strength=subgroup_var_reg_strength,
+    )
 
 
 #Master experiment-runner
@@ -305,7 +382,8 @@ def run_single(model_name: str, splits: dict, seed: int,
                sampling_strategy: str = None,
                max_sampling_weight: float = 10.0,
                loss_weighting_strategy: str = None,
-               max_loss_weight: float = 10.0) -> dict:
+               max_loss_weight: float = 10.0,
+               subgroup_var_reg_strength: float = 0.0) -> dict:
 
     print(f"\n  ▶ {model_name}  (seed={seed})")
     t0 = time.time()
@@ -326,7 +404,14 @@ def run_single(model_name: str, splits: dict, seed: int,
             max_sampling_weight=max_sampling_weight,
         )
         pretrain_model, _ = get_model("PretrainedTST", device=torch.device(device))
-        result = train_pretrained_tst(pretrain_model, loaders, device)
+        result = train_pretrained_tst(
+            pretrain_model,
+            loaders,
+            device,
+            loss_weighting_strategy=loss_weighting_strategy,
+            max_loss_weight=max_loss_weight,
+            subgroup_var_reg_strength=subgroup_var_reg_strength,
+        )
 
     else:
         # LSTM, StandardTransformer, ChronoFormer, PatchTST
@@ -343,6 +428,7 @@ def run_single(model_name: str, splits: dict, seed: int,
             device=device,
             loss_weighting_strategy=loss_weighting_strategy,
             max_loss_weight=max_loss_weight,
+            subgroup_var_reg_strength=subgroup_var_reg_strength,
         )
 
     elapsed = time.time() - t0
