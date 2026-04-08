@@ -1,4 +1,0 @@
-Model      , edge_mode    , mean_num_edges    , std_num_edges     , min_num_edges, max_num_edges, mean_density      , std_density        , min_density       , max_density       , n_patients
-TGTTemporal, temporal_only,   94.0            ,   0.0             ,            94,            94, 0.0616319440305233, 0.0                , 0.0616319440305233, 0.0616319440305233,      41207
-TGTClinical, clinical_only, 2082.3461062440847, 259.34263096098334,             2,          2256, 0.9246293854539376, 0.11256190624478832, 0.0217013880610466, 1.0               ,      41207
-TGTFull    , both         , 2087.7533428786373, 249.26675828402242,            96,          2256, 0.9269762741694747, 0.10818869604570519, 0.0625            , 1.0               ,      41207

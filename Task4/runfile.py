@@ -1,21 +1,32 @@
 """
-run_all.py — Master script: run all models × all seeds, report results
+runfile.py — Master script: run all models × all seeds, report results
 ========================================================================
 Usage:
-    python run_all.py                    # run everything
-    python run_all.py --models LSTM PatchTST   # run subset
-    python run_all.py --device cpu       # force CPU
-    python run_all.py --refresh-data     # requery BigQuery
+    python -m Task4.runfile                    # run everything
+    python -m Task4.runfile --models LSTM PatchTST   # run subset
+    python -m Task4.runfile --device cpu       # force CPU
+    python -m Task4.runfile --refresh-data     # requery BigQuery
+    python Task4/runfile.py                    # direct script execution also works
 """
 
 import argparse, json, os, time
+from pathlib import Path
+import sys
 import numpy as np
 import pandas as pd
 import torch
 
-import config
-from DataPipeline import run_pipeline, prepare_for_seed
-from experiment import run_single, ALL_MODELS
+if __package__ in {None, ""}:
+    REPO_ROOT = Path(__file__).resolve().parents[1]
+    if str(REPO_ROOT) not in sys.path:
+        sys.path.insert(0, str(REPO_ROOT))
+    import Task4.config as config
+    from Task4.DataPipeline import run_pipeline, prepare_for_seed
+    from Task4.experiment import run_single, ALL_MODELS
+else:
+    from . import config
+    from .DataPipeline import run_pipeline, prepare_for_seed
+    from .experiment import run_single, ALL_MODELS
 
 
 def set_seed(seed: int):

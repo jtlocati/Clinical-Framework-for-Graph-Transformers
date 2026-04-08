@@ -18,7 +18,7 @@ import numpy
 import torch
 import torch.nn as nn
 import torch.nn.functional as F 
-import config
+import Task4.config as config 
 
 #Shared Positional Encoding
 
@@ -419,7 +419,7 @@ class TGTModel(nn.Module):
             "perfusion": [18],# lactate
             "lab_glucose": [15],# glucose_lab
         }
-    
+
     def _build_adj(self, missing_mask_one_patient):
         T, F = missing_mask_one_patient.shape
         adj = torch.zeros((T, T), dtype=torch.bool, device=missing_mask_one_patient.device)

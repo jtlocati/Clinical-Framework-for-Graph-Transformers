@@ -12,7 +12,7 @@ print(demo["age_group"].value_counts(dropna=False))
 print("\nRace counts")
 print(demo["race"].value_counts(dropna=False))
 
-out_dir = REPO_ROOT / "Task7" / "results"
+out_dir = REPO_ROOT / "Task7" / "results" / "counts"
 out_dir.mkdir(parents=True, exist_ok=True)
 
 demo["sex"].value_counts(dropna=False).rename_axis("sex").reset_index(name="count").to_csv(

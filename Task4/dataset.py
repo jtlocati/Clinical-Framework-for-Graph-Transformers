@@ -1,18 +1,15 @@
-import numpy
-import torch
-from torch.utils.data import Dataset, DataLoader, WeightedRandomSampler
 from pathlib import Path
+
+import numpy
 import pandas as pd
-import config as cfg
+import torch
+from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
+
+import Task4.config as config
 
 
 class SeqDataset(Dataset):
-    """   
-    Returns (x, mask, y) where:
-      x    : (T, F) float tensor — normalised, forward filled features
-      mask : (T, F) float tensor — 1 = observed, 0 = missing
-      y    : scalar long tensor   — mortality label
-    """
+
 
     def __init__(self, X: numpy.ndarray, M: numpy.ndarray, y: numpy.ndarray, ids: numpy.ndarray):
         self.X = torch.from_numpy(X).float() # (N, T, F)
@@ -29,14 +26,9 @@ class SeqDataset(Dataset):
 
 class FlatDataset:
 
-    def __init__(self, X: numpy.ndarray, M: numpy.ndarray, y: numpy.ndarray):
-        """
-        Parameters:
-        X : (N, T, F) normalised, forward filled
-        M : (N, T, F) original missingness mask
-        y : (N,)
-        """
+    def __init__(self, X: numpy.ndarray, M: numpy.ndarray, y: numpy.ndarray, ids: numpy.ndarray):
         self.y = y
+        self.ids = ids
         self.X_flat = self._summarise(X, M)
 
     @staticmethod
@@ -58,6 +50,7 @@ class FlatDataset:
     def as_arrays(self):
         return self.X_flat, self.y
 
+
 def _load_race_lookup():
     repo_root = Path(__file__).resolve().parents[1]
     demo_path = repo_root / "Tests" / "outputs" / "Task2Demographics.csv"
@@ -68,11 +61,7 @@ def _load_race_lookup():
 
 def _make_race_sample_weights(ids, max_weight: float = 10.0):
     race_lookup = _load_race_lookup()
-
-    races = []
-    for sid in ids:
-        race = race_lookup.get(sid, None)
-        races.append(race)
+    races = [race_lookup.get(int(sid), None) for sid in ids]
 
     counts = {}
     for race in races:
@@ -92,19 +81,19 @@ def _make_race_sample_weights(ids, max_weight: float = 10.0):
         if race in capped_weights:
             weights.append(capped_weights[race])
         else:
-            # ultra-rare / excluded / missing groups get neutral weight
             weights.append(1.0)
 
     return torch.tensor(weights, dtype=torch.double)
+
 
 def make_seq_loaders(splits: dict, batch_size: int = None,
                      num_workers: int = 0,
                      sampling_strategy: str = None,
                      max_sampling_weight: float = 10.0) -> dict:
     
-    #Convenience: turns split dict → DataLoader dict.
+    #Convenience: turns split dict -> DataLoader dict.
 
-    bs = batch_size or cfg.TrainConfig.batch
+    bs = batch_size or config.TrainConfig.batch
     loaders = {}
     for name in ["train", "val", "test"]:
         ds = SeqDataset(splits[name]["X"], splits[name]["M"], splits[name]["y"], splits[name]["ids"])
@@ -141,6 +130,6 @@ def make_flat_data(splits: dict) -> dict:
     flat = {}
     for name in ["train", "val", "test"]:
         flat[name] = FlatDataset(
-            splits[name]["X"], splits[name]["M"], splits[name]["y"]
+            splits[name]["X"], splits[name]["M"], splits[name]["y"], splits[name]["ids"]
         )
     return flat
