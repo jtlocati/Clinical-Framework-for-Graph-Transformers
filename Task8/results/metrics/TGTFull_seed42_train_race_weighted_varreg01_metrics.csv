@@ -1,0 +1,2 @@
+model,seed,intervention,val_auroc,val_auprc,test_auroc,test_auprc
+TGTFull,42,train_race_weighted_varreg01,0.8283736421447597,0.49399255715083157,0.8159860029288792,0.44384100199686694

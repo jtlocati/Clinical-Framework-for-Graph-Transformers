@@ -1,0 +1,2 @@
+model,seed,intervention,val_auroc,val_auprc,test_auroc,test_auprc
+TGTFull,123,train_race_weighted,0.8273048656955483,0.4781843772011428,0.83259978705492,0.48589176545277046
