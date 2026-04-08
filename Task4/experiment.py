@@ -115,9 +115,12 @@ def _load_race_lookup():
     return dict(zip(demo["stay_id"], demo["race"]))
 
 
-def _make_race_weight_lookup(race_lookup: dict, max_weight: float = 10.0):
+def _compute_train_race_weights(train_ids, max_weight: float = 10.0):
+    race_lookup = _load_race_lookup()
+
     counts = {}
-    for race in race_lookup.values():
+    for sid in train_ids:
+        race = race_lookup.get(int(sid), None)
         if race is None or race == "Multipule":
             continue
         counts[race] = counts.get(race, 0) + 1
@@ -126,10 +129,49 @@ def _make_race_weight_lookup(race_lookup: dict, max_weight: float = 10.0):
         return {}
 
     total = sum(counts.values())
-    return {race: min(total / count, max_weight) for race, count in counts.items()}
+    raw_weights = {race: total / count for race, count in counts.items()}
+    return {race: min(weight, max_weight) for race, weight in raw_weights.items()}
 
 
-def _make_batch_race_weights(ids, race_lookup: dict, race_weight_lookup: dict):
+def _compute_train_id_weight_lookup(train_ids, max_weight: float = 10.0):
+    race_lookup = _load_race_lookup()
+    race_weight_lookup = _compute_train_race_weights(train_ids, max_weight=max_weight)
+
+    id_weight_lookup = {}
+    for sid in train_ids:
+        sid = int(sid)
+        race = race_lookup.get(sid, None)
+        id_weight_lookup[sid] = race_weight_lookup.get(race, 1.0)
+
+    return id_weight_lookup
+
+
+def _compute_train_id_race_lookup(train_ids):
+    race_lookup = _load_race_lookup()
+    return {int(sid): race_lookup.get(int(sid), None) for sid in train_ids}
+
+
+def _compute_batch_group_loss_variance(ids, per_sample_loss, id_group_lookup):
+    group_losses = {}
+    for sid, loss_val in zip(ids, per_sample_loss):
+        group = id_group_lookup.get(int(sid), None)
+        if group is None or group == "Multipule":
+            continue
+        group_losses.setdefault(group, []).append(loss_val)
+
+    group_means = []
+    for losses in group_losses.values():
+        if len(losses) == 0:
+            continue
+        group_means.append(torch.stack(losses).mean())
+
+    if len(group_means) < 2:
+        return per_sample_loss.new_tensor(0.0)
+
+    return torch.stack(group_means).var(unbiased=False)
+
+
+def _make_batch_sample_weights(ids, id_weight_lookup):
     if torch.is_tensor(ids):
         id_values = ids.detach().cpu().tolist()
     else:
@@ -137,8 +179,7 @@ def _make_batch_race_weights(ids, race_lookup: dict, race_weight_lookup: dict):
 
     weights = []
     for sid in id_values:
-        race = race_lookup.get(int(sid), None)
-        weights.append(race_weight_lookup.get(race, 1.0))
+        weights.append(id_weight_lookup.get(int(sid), 1.0))
     return torch.tensor(weights, dtype=torch.float32)
 
 
@@ -147,7 +188,8 @@ def train_neural(model: torch.nn.Module,
                  tc: config.TrainConfig = None,
                  device: str = "cuda",
                  loss_weighting_strategy: str = None,
-                 max_loss_weight: float = 10.0) -> dict:
+                 max_loss_weight: float = 10.0,
+                 subgroup_var_reg_strength: float = 0.0) -> dict:
     """
     Standard training loop with:
       - Binary loss
@@ -158,22 +200,24 @@ def train_neural(model: torch.nn.Module,
     device = torch.device(device if torch.cuda.is_available() else "cpu")
     model = model.to(device)
 
-    use_race_weighted_loss = bool(loss_weighting_strategy) and loss_weighting_strategy.startswith("race_weighted")
+    use_race_weighted_loss = loss_weighting_strategy in {"race_weighted", "train_race_weighted"}
 
     y_train = loaders["train"].dataset.y.numpy()
     raw_pw = (y_train == 0).sum() / max((y_train == 1).sum(), 1)
     capped_pw = min(raw_pw, tc.max_pos_weight)
     pos_weight = torch.tensor([capped_pw], dtype=torch.float32, device=device)
     print(f"    pos_weight: raw={raw_pw:.2f}, capped={capped_pw:.2f}")
-
+    train_id_weight_lookup = None
+    train_id_race_lookup = None
     if use_race_weighted_loss:
+        train_id_weight_lookup = _compute_train_id_weight_lookup(
+            loaders["train"].dataset.ids,
+            max_weight=max_loss_weight,
+        )
+        train_id_race_lookup = _compute_train_id_race_lookup(loaders["train"].dataset.ids)
         criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight, reduction="none")
-        race_lookup = _load_race_lookup()
-        race_weight_lookup = _make_race_weight_lookup(race_lookup, max_weight=max_loss_weight)
     else:
         criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight)
-        race_lookup = None
-        race_weight_lookup = None
 
     optimizer = AdamW(model.parameters(), lr=tc.Lr, weight_decay=tc.WeightDecay)
     scheduler = _get_warmup_cosine_scheduler(optimizer, tc.warmup_epochs, tc.epochs)
@@ -191,8 +235,21 @@ def train_neural(model: torch.nn.Module,
 
             if use_race_weighted_loss:
                 per_sample_loss = criterion(logits, y)
-                batch_weights = _make_batch_race_weights(ids, race_lookup, race_weight_lookup).to(device)
-                loss = (per_sample_loss * batch_weights).mean()
+                batch_weights = _make_batch_sample_weights(
+                    ids,
+                    train_id_weight_lookup,
+                ).to(device)
+                base_loss = (per_sample_loss * batch_weights).mean()
+
+                if subgroup_var_reg_strength > 0.0:
+                    var_loss = _compute_batch_group_loss_variance(
+                        ids,
+                        per_sample_loss,
+                        train_id_race_lookup,
+                    )
+                    loss = base_loss + subgroup_var_reg_strength * var_loss
+                else:
+                    loss = base_loss
             else:
                 loss = criterion(logits, y)
 
@@ -278,7 +335,8 @@ def train_pretrained_tst(pretrain_model: PretrainedTSTForPretraining,
                          loaders: dict,
                          device: str = "cuda",
                          loss_weighting_strategy: str = None,
-                         max_loss_weight: float = 10.0) -> dict:
+                         max_loss_weight: float = 10.0,
+                         subgroup_var_reg_strength: float = 0.0) -> dict:
     """
     Phase 1: Selfsupervised masked reconstruction pretraining
     Phase 2: Finetune encoder + classification head
@@ -300,6 +358,7 @@ def train_pretrained_tst(pretrain_model: PretrainedTSTForPretraining,
             torch.nn.utils.clip_grad_norm_(pretrain_model.parameters(), 1.0)
             optimizer.step()
             losses.append(loss.item())
+
         if epoch % 10 == 0 or epoch == 1:
             print(f"      Pretrain epoch {epoch:3d}  recon_loss={numpy.mean(losses):.4f}")
 
@@ -313,6 +372,7 @@ def train_pretrained_tst(pretrain_model: PretrainedTSTForPretraining,
         device=str(device),
         loss_weighting_strategy=loss_weighting_strategy,
         max_loss_weight=max_loss_weight,
+        subgroup_var_reg_strength=subgroup_var_reg_strength,
     )
 
 
@@ -338,8 +398,8 @@ def run_single(model_name: str,
                sampling_strategy: str = None,
                max_sampling_weight: float = 10.0,
                loss_weighting_strategy: str = None,
-               max_loss_weight: float = 10.0) -> dict:
-    #Run one model on one seed. Returns val/test metrics plus test-set outputs.
+               max_loss_weight: float = 10.0,
+               subgroup_var_reg_strength: float = 0.0) -> dict:
 
     print(f"\n  ▶ {model_name}  (seed={seed})")
     t0 = time.time()
@@ -366,6 +426,7 @@ def run_single(model_name: str,
             device,
             loss_weighting_strategy=loss_weighting_strategy,
             max_loss_weight=max_loss_weight,
+            subgroup_var_reg_strength=subgroup_var_reg_strength,
         )
 
     else:
@@ -382,6 +443,7 @@ def run_single(model_name: str,
             device=device,
             loss_weighting_strategy=loss_weighting_strategy,
             max_loss_weight=max_loss_weight,
+            subgroup_var_reg_strength=subgroup_var_reg_strength,
         )
 
     elapsed = time.time() - t0

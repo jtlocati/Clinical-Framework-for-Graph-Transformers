@@ -1,0 +1,14 @@
+model,seed,group,count,positives,negatives,AUROC,AUPRC,note
+TGTFull_train_race_weighted_varreg005,123,overall,6182,848,5334,0.8338252382367299,0.48994080245360666,ok
+TGTFull_train_race_weighted_varreg005,123,sex_F,2682,352,2330,0.8328387143971907,0.4857949300553791,ok
+TGTFull_train_race_weighted_varreg005,123,sex_M,3500,496,3004,0.8348908444654438,0.49404351308568334,ok
+TGTFull_train_race_weighted_varreg005,123,age_<40,488,38,450,0.9183040935672514,0.5404252121776687,ok
+TGTFull_train_race_weighted_varreg005,123,age_40-65,2228,254,1974,0.8456030762112183,0.4493992170952553,ok
+TGTFull_train_race_weighted_varreg005,123,age_65+,3466,556,2910,0.8154948206383347,0.5095002751773037,ok
+TGTFull_train_race_weighted_varreg005,123,race_Asian,170,28,142,0.7570422535211268,0.45625712185842165,ok
+TGTFull_train_race_weighted_varreg005,123,race_Black,665,75,590,0.864587570621469,0.5414997893922271,ok
+TGTFull_train_race_weighted_varreg005,123,race_Hispanic,234,27,207,0.8183932724995526,0.4604775447849965,ok
+TGTFull_train_race_weighted_varreg005,123,race_Multipule,5,1,4,,,Too few samples
+TGTFull_train_race_weighted_varreg005,123,race_Other,445,63,382,0.8503282639408294,0.5347506903240927,ok
+TGTFull_train_race_weighted_varreg005,123,race_Unknown,611,134,477,0.8348352576738948,0.6094895697802546,ok
+TGTFull_train_race_weighted_varreg005,123,race_White,4052,520,3532,0.8300641388622703,0.46092480638616096,ok

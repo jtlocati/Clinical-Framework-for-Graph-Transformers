@@ -1,0 +1,16 @@
+Task 8 conclusion summary
+
+Task 8 evaluated training-time fairness methods using train-split race-weighted loss and subgroup-loss variance regularization.
+
+Final model choices:
+- LSTM: keep train_race_weighted with lambda = 0.0
+- TGTFull: keep train_race_weighted_varreg005 with lambda = 0.05
+
+Main findings:
+- For LSTM, subgroup variance regularization did not provide a clear enough cross-seed fairness-performance improvement over train_race_weighted alone. Mean AUROC and AUPRC changed only slightly, and disparity changes were mixed across attributes.
+- For TGTFull, subgroup variance regularization at lambda = 0.05 improved mean overall AUROC and AUPRC relative to train_race_weighted alone, while still remaining below the original unadjusted TGTFull model on overall performance.
+- This means Task 8 supports different final training-time settings by model family: weighted-only for the baseline model, and weighted-plus-variance-regularization for the graph-transformer model.
+
+Task 8 final recommended settings:
+- Baseline model: LSTM_train_race_weighted
+- Graph-transformer model: TGTFull_train_race_weighted_varreg005

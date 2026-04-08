@@ -1,0 +1,2 @@
+model,seed,intervention,val_auroc,val_auprc,test_auroc,test_auprc
+LSTM,2024,train_race_weighted,0.8236615195176303,0.469334884984107,0.8174000360803956,0.478246152423582
