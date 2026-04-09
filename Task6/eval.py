@@ -58,24 +58,37 @@ def SubgroupMetrics(prediction: dict, masks: dict) -> pandas.DataFrame:
             })
     return pandas.DataFrame(rows)
     
-def FairnessDif(metrics: pandas.DataFrame) -> pandas.DataFrame:
+def FairnessDif(metrics: pandas.DataFrame, argument: str = None) -> pandas.DataFrame:
     # drop rows with too few values
     substi = metrics[(metrics["attribute"] != "overall") & (metrics["auroc"].notna())].copy()
     rows = []
 
-    for (model, attrobute), grp in substi.groupby(["model", "attribute"]):
-        rows.append({ 
-            "model": model,
-            "attribute": attrobute,
-            "auroc_max": grp["auroc"].max(),
-            "auroc_min": grp["auroc"].min(),
-            "auroc_gap": grp["auroc"].max() - grp["auroc"].min(),
-            "auroc_std": grp["auroc"].std(),
-            "auprc_max": grp["auprc"].max(),
-            "auprc_min": grp["auprc"].min(),
-            "auprc_gap": grp["auprc"].max() - grp["auprc"].min(),
-            "auprc_std": grp["auprc"].std(),
+    if argument is None:
+        for (model, attrobute), grp in substi.groupby(["model", "attribute"]):
+            rows.append({ 
+                "model": model,
+                "attribute": attrobute,
+                "auroc_max": grp["auroc"].max(),
+                "auroc_min": grp["auroc"].min(),
+                "auroc_gap": grp["auroc"].max() - grp["auroc"].min(),
+                "auroc_std": grp["auroc"].std(),
+                "auprc_max": grp["auprc"].max(),
+                "auprc_min": grp["auprc"].min(),
+                "auprc_gap": grp["auprc"].max() - grp["auprc"].min(),
+                "auprc_std": grp["auprc"].std(),
+                })
+            
+    else:
+        for (model, attr), grp in substi.groupby(["model", "attribute"]):
+            rows.append({
+                "model": model,
+                "attribute": attr,
+                "auroc_gap": grp["auroc"].max() - grp["auroc"].min(),
+                "auroc_std": grp["auroc"].std(),
+                "auprc_gap": grp["auprc"].max() - grp["auprc"].min(),
+                "auprc_std": grp["auprc"].std(),
             })
+    
     return pandas.DataFrame(rows)
 
 def BuildFairTable(metrics: pandas.DataFrame) -> pandas.DataFrame:
