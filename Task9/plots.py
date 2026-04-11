@@ -32,7 +32,7 @@ def TradeoffPlot(comparison: pandas.DataFrame):
     fig, axes = matplotlib.pyplot.subplots(1, len(models), figsize=(7*len(models), 6), squeeze=False)
     for idx, model in enumerate(models):
         ax = axes[0, idx]
-        mdf = comparison(comparison["model"] == model)
+        mdf = comparison[comparison["model"] == model]
 
         for _, row in mdf.iterrows():
             method = row["method"]
@@ -44,7 +44,7 @@ def TradeoffPlot(comparison: pandas.DataFrame):
             zorder=3,
             )
             ax.annotate(
-                method.replace("_", "\n")
+                method.replace("_", "\n"),
                 (row["max_auroc_gap"], row["overall_auroc"]),
                 fontsize=6, ha="left", va="bottom",
                 xytext=(5, 5), textcoords="offset points",
@@ -63,7 +63,7 @@ def TradeoffPlot(comparison: pandas.DataFrame):
     print(f"Trade-off scatter -> {path}")
 
 def plot_before_after_bars(comparison_df: pandas.DataFrame, save_dir: str = None):
-    save_dir or config9.RESULTS_DIR
+    save_dir = config9.OUTPUT_DIR
     models = comparison_df["model"].unique()
     methods = comparison_df["method"].unique()
     n_models = len(models)
@@ -81,7 +81,7 @@ def plot_before_after_bars(comparison_df: pandas.DataFrame, save_dir: str = None
                 (comparison_df["model"] == model) &
                    (comparison_df["method"] == method)
             ]
-        values.append(row["max_auroc_gap"].values[0] if len(row) else 0)
+             values.append(row["max_auroc_gap"].values[0] if len(row) else 0)
 
         offset = (i - n_methods / 2 + 0.5) * width
         color = METHOD_COLORS.get(method, "gray")
@@ -104,7 +104,7 @@ def plot_before_after_bars(comparison_df: pandas.DataFrame, save_dir: str = None
 
 
 def plot_tpr_gap_comparison(comparison_df: pandas.DataFrame, save_dir: str = None):
-    save_dir = save_dir or config9.RESULTS_DIR
+    save_dir = save_dir or config9.OUTPUT_DIR
     models = comparison_df["model"].unique()
     methods = comparison_df["method"].unique()
     n_models = len(models)
@@ -191,10 +191,10 @@ def plot_method_heatmap(all_results: dict, model_name: str, save_dir: str = None
     print(f"  Heatmap ({model_name}) -> {path}")
 
 def generate_all_plots(comparison_df: pandas.DataFrame, all_results: dict, save_dir: str = None):
-    save_dir = save_dir or config9.RESULTS_DIR
+    save_dir = save_dir or config9.OUTPUT_DIR
     print(f"\n{config9.BAG} Generating Task 9 Plots {config9.BAG}")
 
-    TradeoffPlot(comparison_df, save_dir)
+    TradeoffPlot(comparison_df)
     plot_before_after_bars(comparison_df, save_dir)
     plot_tpr_gap_comparison(comparison_df, save_dir)
 

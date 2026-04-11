@@ -30,7 +30,7 @@ def SubgroupMetrics(y_true, y_prob, masks, model="model") -> pandas.DataFrame:
         if len(set(sub_y)) < 2:
             rows.append({"model": model, "subgroup": subg, "attribute": attribute, "n": int(num), "auroc": numpy.nan, "auprc": numpy.nan})
             continue
-        rows.append({"model": model, "subgroup": subg, "attribute": attribute, "n": int(num), "auroc": roc_auc_score(y_true, y_prob), "auprc": average_precision_score(y_true, y_prob)})
+        rows.append({"model": model, "subgroup": subg, "attribute": attribute, "n": int(num), "auroc": roc_auc_score(sub_y, sub_p), "auprc": average_precision_score(sub_y, sub_p)})
 
     return pandas.DataFrame(rows)
 
@@ -47,18 +47,18 @@ def EvalAll(calibrated: dict, masks: dict) -> dict:
     model_names = list(calibrated["original"].keys())
 
     for model in model_names:
-        print(f"{config9.BAG}Evaluating post-hoc methods for {model_names} {config9.BAG}")
+        print(f"{config9.BAG}Evaluating post-hoc methods for {model} {config9.BAG}")
         model_results = {}
 
         for cal_method in ["original"] + config9.CAL_METHODS:
             y_true, y_prob = calibrated[cal_method][model]
             GlobalThresh = intervention.BestF1Thresh(y_true, y_prob)
-            GroupThresh = intervention.PerSGThresh(y_true, y_prob, masks)
+            GroupThresh = intervention.PerSGThresh(y_true, y_prob, masks, GlobalThresh)
 
             for thresh_type in ["GlobalThresh", "PerGroupThresh"]:
                 label = f"{cal_method.capitalize()}_{thresh_type}"
                 if cal_method == "original":
-                    lable = f"Original_{thresh_type}"
+                    label = f"Original_{thresh_type}"
                 print(f"{config9.AG} {label} {config9.AG}")
 
                 mdf, gdf = SingleEval(y_true, y_prob, masks, label)
@@ -75,8 +75,8 @@ def EvalAll(calibrated: dict, masks: dict) -> dict:
                 else:
                     tpr_gap = (tdf["tpr_tuned"].max() - tdf["tpr_tuned"].min()
                                if len(tdf) >= 2 else 0.0)
-                    
-                    model_results[label] = {
+
+                model_results[label] = {
                     "metrics": mdf,
                     "gaps": gdf,
                     "threshold_detail": tdf,

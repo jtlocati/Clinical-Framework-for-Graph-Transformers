@@ -6,11 +6,13 @@ import pandas
 import Task9.config as config9
 import Task6.config as config6
 import Task6.intervention as intervention
-import Task9.eval as eval9, calibration
+import Task9.calibration as calibration
+import Task9.eval as eval9
 import Task6.eval as eval6
 from Task4 import DataPipeline
 from Task6 import modelmetrics
 import Task9.plots as plots
+import pickle
 
 def main():
     total_time = time.time()
@@ -20,8 +22,17 @@ def main():
     test_ids = splits["test"]["ids"]
     print(f"TEST SET: {len(test_ids):,}")
 
-    predictions = modelmetrics.CollectMetrics(splits, config6.seed)
-    print(f"Models Trained: {list(predictions.keys())}")
+    CACHE_PATH = os.path.join(config9.OUTPUT_DIR, "T9_predictions_cache.pkl")
+
+    if os.path.exists(CACHE_PATH):
+        print("Loading cached predictions...")
+        with open(CACHE_PATH, "rb") as f:
+            predictions = pickle.load(f)
+    else:
+        predictions = modelmetrics.CollectMetrics(splits, config6.seed)
+        with open(CACHE_PATH, "wb") as f:
+            pickle.dump(predictions, f)
+        print(f"Models Trained: {list(predictions.keys())}")
 
     print(f"{config9.BAG} Loading Deomgraphics + Creating Masks {config9.BAG}")
     demographics = eval6.load_demographics()

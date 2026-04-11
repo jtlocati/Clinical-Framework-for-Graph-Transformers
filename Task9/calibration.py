@@ -25,26 +25,51 @@ def CalSubgroup(y_true: numpy.ndarray, y_prob: numpy.ndarray, masks: dict, metho
         fit_fn = IsoFitPredict
     else:
         raise ValueError(f"The method of: {method} is not valid, CHECK SPELLING")
-    
-    calabrated = y_prob.copy()
-    covered = numpy.zeros(len(y_prob), dtype=bool)
 
+    # Group masks by attribute (sex, age, race)
+    attributes = {}
     for subgroup, mask in masks.items():
-        num = mask.sum()
-        if num < Task6.config.MinGroup:
-            continue
-        sub_t = y_true[mask]
-        sub_p = y_prob[mask]
+        attr = subgroup.split("_")[0]
+        if attr not in attributes:
+            attributes[attr] = {}
+        attributes[attr][subgroup] = mask
 
-        if len(set(sub_t)) < 2:
-            continue
+    # Calibrate per attribute separately, collect results
+    cal_per_attr = []
+    for attr, attr_masks in attributes.items():
+        calabrated = y_prob.copy()
+        covered = numpy.zeros(len(y_prob), dtype=bool)
 
-        cal_p = fit_fn(sub_t, sub_p)
-        calabrated[mask] = cal_p
-        covered |= mask
-    uncovered = (~covered).sum()
-    if uncovered > 0:
-        print(f"UNCOVERED FILES: {uncovered}")
+        for subgroup, mask in attr_masks.items():
+            num = mask.sum()
+            if num < Task6.config.MinGroup:
+                continue
+            sub_t = y_true[mask]
+            sub_p = y_prob[mask]
+
+            if len(set(sub_t)) < 2:
+                continue
+
+            # Fall back to Platt for small subgroups — Isotonic overfits
+            if num < 500 and fit_fn == IsoFitPredict:
+                cal_p = PlattFitPredict(sub_t, sub_p)
+            else:
+                cal_p = fit_fn(sub_t, sub_p)
+            calabrated[mask] = cal_p
+            covered |= mask
+
+        uncovered = (~covered).sum()
+        if uncovered > 0:
+            print(f"UNCOVERED ({attr}): {uncovered}")
+
+        cal_per_attr.append(calabrated)
+
+    # Average calibrated probabilities across attributes
+    if len(cal_per_attr) == 0:
+        return y_prob.copy()
+    
+    stacked = numpy.stack(cal_per_attr, axis=0)
+    return stacked.mean(axis=0)
 
 def CalAllModels(predictions: dict, masks: dict) -> dict:
     result = {"original": {}, "platt": {}, "isotonic": {}}
@@ -56,5 +81,5 @@ def CalAllModels(predictions: dict, masks: dict) -> dict:
         for method in Task9.config.CAL_METHODS:
             print(f"{Task9.config.AG} Calebrating: {model} with {method} {Task6.config.AG}")
             cal_prob = CalSubgroup(y_true, y_prob, masks, method)
-            result[method][model] = (y_true, y_prob)
+            result[method][model] = (y_true, cal_prob)
     return result

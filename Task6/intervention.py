@@ -29,14 +29,11 @@ def BestF1Thresh(y_true, y_prob):
 
 def SweepThresh(y_true, y_prob, metric="f1"):
     thresholds = numpy.arange(config9.THRECH_SWEEP["start"], config9.THRECH_SWEEP["stop"], config9.THRECH_SWEEP["step"])
-    best_thresh = 0,5
+    best_thresh = 0.5
     best_score = -1
 
     for t in thresholds:
-        if y_prob >= t:
-            predictions = 1
-        else:
-            predictions = 0
+        predictions = (y_prob >= t).astype(int)
 
         if metric == "f1":
             score = f1_score(y_true, predictions, zero_division=0)
@@ -54,19 +51,61 @@ def SweepThresh(y_true, y_prob, metric="f1"):
             best_score = score
             best_thresh = float(t)
     return best_thresh
-            
-def PerSGThresh(y_true: numpy.ndarray, y_prob: numpy.ndarray, masks: dict) -> dict:
-    thesholds = {}
+
+def TargetTPRThresh(y_true, y_prob, target_tpr):
+    thresholds = numpy.arange(config9.THRECH_SWEEP["start"], config9.THRECH_SWEEP["stop"], config9.THRECH_SWEEP["step"])
+    best_thresh = 0.5
+    best_diff = float("inf")
+    for t in thresholds:
+        preds = (y_prob >= t).astype(int)
+        pos = (y_true == 1).sum()
+        if pos == 0:
+            continue
+        tpr = preds[y_true == 1].mean()
+        diff = abs(tpr - target_tpr)
+        if diff < best_diff:
+            best_diff = diff
+            best_thresh = float(t)
+    return best_thresh
+
+def PerSGThresh(y_true: numpy.ndarray, y_prob: numpy.ndarray, masks: dict, globalthresh: float = None) -> dict:
+    if globalthresh is None:
+        globalthresh = BestF1Thresh(y_true, y_prob)
+
+    # First pass: compute each subgroup's TPR at the global threshold
+    group_tprs = {}
     for subgroup, mask in masks.items():
-        num = masks.sum()
+        num = mask.sum()
         if num < config6.MinGroup:
             continue
         sub_t = y_true[mask]
-        sub_p= y_prob[mask]
+        sub_p = y_prob[mask]
         if len(set(sub_t)) < 2:
             continue
-        thesholds[subgroup] = SweepThresh(sub_t, sub_p, metric="f1")
-        return thesholds
+        global_preds = (sub_p >= globalthresh).astype(int)
+        pos = (sub_t == 1).sum()
+        if pos > 0:
+            group_tprs[subgroup] = global_preds[sub_t == 1].mean()
+
+    # Use median TPR across groups as the equalization target
+    if len(group_tprs) == 0:
+        target_tpr = 0.5
+    else:
+        target_tpr = float(numpy.median(list(group_tprs.values())))
+
+    print(f"Target TPR (median across groups): {target_tpr:.4f}")
+
+    thesholds = {}
+    for subgroup, mask in masks.items():
+        num = mask.sum()
+        if num < config6.MinGroup:
+            continue
+        sub_t = y_true[mask]
+        sub_p = y_prob[mask]
+        if len(set(sub_t)) < 2:
+            continue
+        thesholds[subgroup] = TargetTPRThresh(sub_t, sub_p, target_tpr)
+    return thesholds
 
 def ApplyThresh(y_true: numpy.ndarray, y_prob: numpy.ndarray, masks: dict, globalthresh: float, groupthresh: dict) -> pandas.DataFrame:
 
@@ -77,20 +116,14 @@ def ApplyThresh(y_true: numpy.ndarray, y_prob: numpy.ndarray, masks: dict, globa
             continue
         sub_t = y_true[mask]
         sub_p = y_prob[mask]
-        if len(set(sub_t)):
+        if len(set(sub_t)) < 2:
             continue
 
         Tunedthresh = groupthresh.get(subgroup, globalthresh)
 
-        if sub_p >= globalthresh:
-            GlobalPrediction = 1
-        else:
-            GlobalPrediction = 0 
+        GlobalPrediction = (sub_p >= globalthresh).astype(int)
         
-        if sub_p >= Tunedthresh:
-            TunedPrediction = 1
-        else: 
-            Tunedthresh = 0
+        TunedPrediction = (sub_p >= Tunedthresh).astype(int)
         
         position = (sub_t == 1).sum()
 
@@ -98,14 +131,14 @@ def ApplyThresh(y_true: numpy.ndarray, y_prob: numpy.ndarray, masks: dict, globa
             TPRglobal = GlobalPrediction[sub_t == 1].mean()
             TPRtuned = TunedPrediction[sub_t == 1].mean()
         else:
-            TPRglobal, TPRgtuned = 0.0        
+            TPRglobal, TPRtuned = 0.0, 0.0       
 
         neg = (sub_t == 0).sum()
         if neg > 0:
-            FPRglobal = GlobalPrediction[sub_t == 1].mean()
-            FPRtuned = TunedPrediction[sub_t == 1].mean()
+            FPRglobal = GlobalPrediction[sub_t == 0].mean()
+            FPRtuned = TunedPrediction[sub_t == 0].mean()
         else:
-            FPRglobal, FPRtuned = 0.0
+            FPRglobal, FPRtuned = 0.0, 0.0
         
         F1global = f1_score(sub_t, GlobalPrediction, zero_division=0)
         F1tuned = f1_score(sub_t, TunedPrediction, zero_division=0)
@@ -116,7 +149,7 @@ def ApplyThresh(y_true: numpy.ndarray, y_prob: numpy.ndarray, masks: dict, globa
             "global_thresh": round(globalthresh, 4),
             "tuned_thresh": round(Tunedthresh, 4),
             "tpr_global": round(float(TPRglobal), 4),
-            "tpr_tuned": round(float(TPRgtuned), 4),
+            "tpr_tuned": round(float(TPRtuned), 4),
             "fpr_global": round(float(FPRglobal), 4),
             "fpr_tuned": round(float(FPRtuned), 4),
             "f1_global": round(float(F1global), 4),
@@ -129,8 +162,8 @@ def ApplyThresh(y_true: numpy.ndarray, y_prob: numpy.ndarray, masks: dict, globa
         tpr_gap_before = DATA["tpr_global"].max() - DATA["tpr_global"].min()
         tpr_gap_after  = DATA["tpr_tuned"].max()  - DATA["tpr_tuned"].min()
         reduction = tpr_gap_before - tpr_gap_after
-        print(f"    TPR gap: {tpr_gap_before:.4f} -> {tpr_gap_after:.4f} "
-              f"(reduction: {reduction:+.4f})")
+        print(f"PR gap: {tpr_gap_before:.4f} -> {tpr_gap_after:.4f}\n(reduction: {reduction:+.4f})")
+    return DATA
 
 
 

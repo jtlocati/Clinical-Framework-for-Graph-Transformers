@@ -1,0 +1,14 @@
+model,subgroup,attribute,n,auroc,auprc
+Platt_PerGroupThresh,overall,overall,6182,0.8209735870280366,0.4381111832657079
+Platt_PerGroupThresh,sex_F,sex,2705,0.8233003764451524,0.4601676441640334
+Platt_PerGroupThresh,sex_M,sex,3477,0.8187951954896433,0.4244304530050914
+Platt_PerGroupThresh,age_40-65,age,2132,0.8452170309087721,0.4554853416602214
+Platt_PerGroupThresh,age_65+,age,3579,0.7953372536872888,0.43832530288008165
+Platt_PerGroupThresh,age_<40,age,471,0.8780045351473923,0.394677941715431
+Platt_PerGroupThresh,race_Asian,race,182,0.7168859649122807,0.3733005195266448
+Platt_PerGroupThresh,race_Black,race,682,0.8257703081232493,0.49693583226486404
+Platt_PerGroupThresh,race_Hispanic,race,239,0.841543513957307,0.38872823058721456
+Platt_PerGroupThresh,race_Multipule,race,2,,
+Platt_PerGroupThresh,race_Other,race,447,0.8930663221360896,0.5526066515127338
+Platt_PerGroupThresh,race_Unknown,race,580,0.8235658688638146,0.5212436113757585
+Platt_PerGroupThresh,race_White,race,4050,0.8107589580732303,0.4088326628613826
