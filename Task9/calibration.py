@@ -40,8 +40,14 @@ def CalSubgroup(y_true: numpy.ndarray, y_prob: numpy.ndarray, masks: dict, metho
         calabrated = y_prob.copy()
         covered = numpy.zeros(len(y_prob), dtype=bool)
 
+        for attr, attr_masks in attributes.items():
+             if attr == "age":
+                cal_per_attr.append(y_prob.copy())
+                continue
+
         for subgroup, mask in attr_masks.items():
             num = mask.sum()
+
             if num < Task6.config.MinGroup:
                 continue
             sub_t = y_true[mask]

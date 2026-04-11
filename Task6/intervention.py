@@ -6,9 +6,10 @@ from sklearn.linear_model import LogisticRegression
 import Task6.config as config6
 import Task9.config as config9
 
+
 def FindBestModel(metrics: pandas.DataFrame) -> dict:
     overall = metrics[metrics["subgroup"] == "overall"].copy()
-
+    
     BaslineRows = overall[overall["model"].isin(config6.BASELINE_MODELS)]
     TGTRows = overall[overall["model"].str.startswith("tgt_")]
 

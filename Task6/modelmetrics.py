@@ -128,7 +128,6 @@ def CollectMetrics(splits: dict, seed) -> dict:
         t0 = time.time()
         _, y_true, y_prob = RunSingleWithPred(name, splits, seed, device="cpu")
 
-
         print(f"{Task6.config.BAG}  TRAINING FOR {name} DONE\n  Time {time.time() - t0 :.1f}\nAUROC: {sklearn.metrics.roc_auc_score(y_true, y_prob):.4f}\n{Task6.config.BAG}")
 
         predictions[name] = (y_true, y_prob)
@@ -144,4 +143,22 @@ def CollectMetrics(splits: dict, seed) -> dict:
 
     return predictions
 
+def CollectMetricsMultiSeed(splits: dict, seeds: list) -> tuple:
+    all_predictions = {}
+    per_seed = {}
 
+    for seed in seeds:
+        print(f"\n{'='*60}\nSEED: {seed}\n{'='*60}")
+        preds = CollectMetrics(splits, seed)
+        per_seed[seed] = preds
+        for model_name, (yt, yp) in preds.items():
+            if model_name not in all_predictions:
+                all_predictions[model_name] = []
+            all_predictions[model_name].append((yt, yp))
+
+    averaged = {}
+    for model_name, runs in all_predictions.items():
+        y_true = runs[0][0]
+        y_probs = numpy.stack([r[1] for r in runs], axis=0)
+        averaged[model_name] = (y_true, y_probs.mean(axis=0))
+    return averaged, per_seed

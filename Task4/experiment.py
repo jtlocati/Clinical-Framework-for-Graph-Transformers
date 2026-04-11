@@ -295,29 +295,29 @@ def RunSingleWithPred(model_name: str, splits: dict, seed: int, device: str = "c
         dtrain = lgb.Dataset(X_tr, label=y_tr)
         dval = lgb.Dataset(X_val, label=y_val, reference=dtrain)
         callbacks = [lgb.early_stopping(stopping_rounds=config.EARLY_STOP),lgb.log_evaluation(period=200)]
-        mdl = lgb.train(params, dtrain, num_boost_round=config.LGBM_ROUNDS, valid_sets=[dval], valid_names=["val"], callbacks=callbacks)
+        mdl = lgb.train(params, dtrain, num_boost_round=config.ROUNDS, valid_sets=[dval], valid_names=["val"], callbacks=callbacks)
         y_prob = mdl.predict(X_te)
         y_true = y_te
 
     elif model_name == "PretrainedTST":
         loaders = make_seq_loaders(splits, num_workers=0)
         pretrain_model, _ = get_model("PretrainedTST", device=dev)
-        # reuse train_pretrained_tst but we need predictions after
-        result = train_pretrained_tst(pretrain_model, loaders, device)
-
         pc = config.PretrainedTSTConfig()
-        pretrain_model2, _ = get_model("PretrainedTST", device=dev)
-        pretrain_model2 = pretrain_model2.to(dev)
-        opt = AdamW(pretrain_model2.parameters(), lr=pc.pretrain_lr)
+
+        # Phase 1: pretrain
+        pretrain_model = pretrain_model.to(dev)
+        opt = AdamW(pretrain_model.parameters(), lr=pc.pretrain_lr)
         for ep in range(1, pc.pretrain_epochs + 1):
-            pretrain_model2.train()
+            pretrain_model.train()
             for x, m, _ in loaders["train"]:
                 x, m = x.to(dev), m.to(dev)
-                loss = pretrain_model2(x, m)
+                loss = pretrain_model(x, m)
                 opt.zero_grad(); loss.backward()
-                torch.nn.utils.clip_grad_norm_(pretrain_model2.parameters(), 1.0)
+                torch.nn.utils.clip_grad_norm_(pretrain_model.parameters(), 1.0)
                 opt.step()
-        encoder = pretrain_model2.encoder
+
+        # Phase 2: fine-tune using the SAME pretrained encoder
+        encoder = pretrain_model.encoder
         ft_model = PretrainedTST(encoder, pc).to(dev)
         train_neural(ft_model, loaders, device=device)
         y_true, y_prob = predict_neural(ft_model, loaders["test"], dev)

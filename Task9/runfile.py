@@ -3,6 +3,7 @@ import sys
 import json
 import time
 import pandas
+import numpy
 import Task9.config as config9
 import Task6.config as config6
 import Task6.intervention as intervention
@@ -18,8 +19,23 @@ def main():
     total_time = time.time()
     print(f"{config6.BAG} LOADING DATA + TRAINING MODELS {config6.BAG}")
     Rawx, M, y, ids = DataPipeline.run_pipeline()
-    splits, means, stddev = DataPipeline.prepare_for_seed(Rawx, M, y, ids, config6.seed)
-    test_ids = splits["test"]["ids"]
+    all_predictions = {}
+    for seed in config6.seed:
+        print(f"\n{'='*60} SEED {seed} {'='*60}")
+        splits, means, stddev = DataPipeline.prepare_for_seed(Rawx, M, y, ids, seed)
+        test_ids = splits["test"]["ids"]
+        preds = modelmetrics.CollectMetrics(splits, seed)
+        for model, (yt, yp) in preds.items():
+            if model not in all_predictions:
+                all_predictions[model] = []
+            all_predictions[model].append((yt, yp))
+
+    # Average predictions across seeds
+    predictions = {}
+    for model, pred_list in all_predictions.items():
+        avg_prob = numpy.mean([yp for _, yp in pred_list], axis=0)
+        y_true = pred_list[0][0]  # labels are the same across seeds
+        predictions[model] = (y_true, avg_prob)
     print(f"TEST SET: {len(test_ids):,}")
 
     CACHE_PATH = os.path.join(config9.OUTPUT_DIR, "T9_predictions_cache.pkl")

@@ -12,12 +12,12 @@ def main():
 
     print(f"{config.AG} Loading Data {config.AG}")
     Rawx, M, y, ids = DataPipeline.run_pipeline()
-    splits, means, studiodev = DataPipeline.prepare_for_seed(Rawx, M, y, ids, config.seed)
+    splits, means, studiodev = DataPipeline.prepare_for_seed(Rawx, M, y, ids, config.SPLIT_SEED)
     test_ids = splits["test"]["ids"]
     print(f"{config.AG}TEST SET: {len(test_ids):,} patients{config.AG}")
 
     print(f"{config.BAG}TRAINING MODELS {config.AG}")
-    predictions = modelmetrics.CollectMetrics(splits, config.seed)
+    predictions, per_seed = modelmetrics.CollectMetricsMultiSeed(splits, config.ModelSeed)
 
     print(f"{config.AG}COLLECTING DEMOGRAPHICS{config.AG}")
     demographics = eval.load_demographics()
@@ -32,7 +32,8 @@ def main():
     OverallMetrics = metrics[metrics["subgroup"] == "overall"][["model", "auroc", "auprc"]]
     print(OverallMetrics.to_string(index=False))
 
-    print(f"{config.BAG}FAIRNESS GAPS :{config.BAG}\n{gap[["model", "attribute", "auroc_gap", "auprc_gap", "auroc_std"]].to_string(index=False)}")
+    gap_str = gap[["model", "attribute", "auroc_gap", "auprc_gap", "auroc_std"]].to_string(index=False)
+    print(f"{config.BAG}FAIRNESS GAPS :{config.BAG}\n{gap_str}")
 
     print(f"{config.BAG}GENERATING PLOTS{config.BAG}")
     plotting.AllPlot(metrics, gap)
@@ -43,6 +44,8 @@ def main():
     interventionResults = {}
     for key in ["best_baseline", "best_tgt"]:
         modelName = best[key]
+        if model_name is None:
+            continue
         YTrue, YProb = predictions[modelName]
         result = intervention.ExecuteInterns(modelName, YTrue,YProb, masks)
         interventionResults[modelName] = result
@@ -74,7 +77,8 @@ def main():
 
     # JSON summary
     json_data = {
-        "seed": config.seed,
+        "seed": config.SPLIT_SEED,
+        "model_seeds": config.ModelSeed,
         "models": config.BASELINE_MODELS,
         "overall": OverallMetrics.to_dict(orient="records"),
         "gaps": gap.to_dict(orient="records"),

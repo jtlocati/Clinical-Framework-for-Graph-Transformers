@@ -8,6 +8,8 @@ BAG = "="* 60
 
 ALL_MODELS = Task6.config.BASELINE_MODELS + [f"tgt_{v}" for v in Task6.config.TRANSFORMMERS]
 
+seed = [42, 123, 2024]
+
 CAL_METHODS = ["platt", "isotonic"]
 
 THRECH_SWEEP = {"start": 0.0 , "stop": 0.99, "step": .005}
