@@ -36,8 +36,8 @@
     {
       "model": "LSTM",
       "method": "Platt_GlobalThresh",
-      "overall_auroc": 0.8252,
-      "overall_auprc": 0.4457,
+      "overall_auroc": 0.8285,
+      "overall_auprc": 0.4527,
       "max_auroc_gap": 0.1921,
       "max_auprc_gap": 0.2595,
       "tpr_gap": 0.3166
@@ -45,29 +45,29 @@
     {
       "model": "LSTM",
       "method": "Platt_PerGroupThresh",
-      "overall_auroc": 0.8252,
-      "overall_auprc": 0.4457,
+      "overall_auroc": 0.8285,
+      "overall_auprc": 0.4527,
       "max_auroc_gap": 0.1921,
       "max_auprc_gap": 0.2595,
-      "tpr_gap": 0.0344
+      "tpr_gap": 0.0184
     },
     {
       "model": "LSTM",
       "method": "Isotonic_GlobalThresh",
-      "overall_auroc": 0.8288,
-      "overall_auprc": 0.434,
-      "max_auroc_gap": 0.1827,
-      "max_auprc_gap": 0.251,
-      "tpr_gap": 0.3166
+      "overall_auroc": 0.8395,
+      "overall_auprc": 0.4697,
+      "max_auroc_gap": 0.1666,
+      "max_auprc_gap": 0.2506,
+      "tpr_gap": 0.3921
     },
     {
       "model": "LSTM",
       "method": "Isotonic_PerGroupThresh",
-      "overall_auroc": 0.8288,
-      "overall_auprc": 0.434,
-      "max_auroc_gap": 0.1827,
-      "max_auprc_gap": 0.251,
-      "tpr_gap": 0.0785
+      "overall_auroc": 0.8395,
+      "overall_auprc": 0.4697,
+      "max_auroc_gap": 0.1666,
+      "max_auprc_gap": 0.2506,
+      "tpr_gap": 0.1334
     },
     {
       "model": "tgt_full_graph",
@@ -90,52 +90,52 @@
     {
       "model": "tgt_full_graph",
       "method": "Platt_GlobalThresh",
-      "overall_auroc": 0.8175,
-      "overall_auprc": 0.4308,
+      "overall_auroc": 0.8208,
+      "overall_auprc": 0.4392,
       "max_auroc_gap": 0.2259,
       "max_auprc_gap": 0.2677,
-      "tpr_gap": 0.35
+      "tpr_gap": 0.3666
     },
     {
       "model": "tgt_full_graph",
       "method": "Platt_PerGroupThresh",
-      "overall_auroc": 0.8175,
-      "overall_auprc": 0.4308,
+      "overall_auroc": 0.8208,
+      "overall_auprc": 0.4392,
       "max_auroc_gap": 0.2259,
       "max_auprc_gap": 0.2677,
-      "tpr_gap": 0.0207
+      "tpr_gap": 0.015
     },
     {
       "model": "tgt_full_graph",
       "method": "Isotonic_GlobalThresh",
-      "overall_auroc": 0.8208,
-      "overall_auprc": 0.4238,
-      "max_auroc_gap": 0.2326,
-      "max_auprc_gap": 0.2692,
-      "tpr_gap": 0.35
+      "overall_auroc": 0.8329,
+      "overall_auprc": 0.4617,
+      "max_auroc_gap": 0.1953,
+      "max_auprc_gap": 0.2643,
+      "tpr_gap": 0.4931
     },
     {
       "model": "tgt_full_graph",
       "method": "Isotonic_PerGroupThresh",
-      "overall_auroc": 0.8208,
-      "overall_auprc": 0.4238,
-      "max_auroc_gap": 0.2326,
-      "max_auprc_gap": 0.2692,
-      "tpr_gap": 0.0804
+      "overall_auroc": 0.8329,
+      "overall_auprc": 0.4617,
+      "max_auroc_gap": 0.1953,
+      "max_auprc_gap": 0.2643,
+      "tpr_gap": 0.1306
     }
   ],
   "best_method_LSTM": {
     "method": "Isotonic_PerGroupThresh",
     "original_gap": 0.1921,
-    "best_gap": 0.1827,
-    "reduction": 0.0094,
-    "auroc": 0.8288
+    "best_gap": 0.1666,
+    "reduction": 0.0255,
+    "auroc": 0.8395
   },
   "best_method_tgt_full_graph": {
-    "method": "Original_GlobalThresh",
+    "method": "Isotonic_PerGroupThresh",
     "original_gap": 0.2259,
-    "best_gap": 0.2259,
-    "reduction": 0.0,
-    "auroc": 0.8175
+    "best_gap": 0.1953,
+    "reduction": 0.0306,
+    "auroc": 0.8329
   }
 }
