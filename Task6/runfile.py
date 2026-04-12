@@ -44,7 +44,7 @@ def main():
     interventionResults = {}
     for key in ["best_baseline", "best_tgt"]:
         modelName = best[key]
-        if model_name is None:
+        if modelName is None:
             continue
         YTrue, YProb = predictions[modelName]
         result = intervention.ExecuteInterns(modelName, YTrue,YProb, masks)
