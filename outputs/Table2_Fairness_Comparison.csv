@@ -1,0 +1,11 @@
+Model,Overall AUROC,Overall AUPRC,Sex AUROC gap,Age AUROC gap,Race AUROC gap,Sex AUPRC gap,Age AUPRC gap,Race AUPRC gap,Notes
+Logistic Regression,0.8060,0.4412,NA,NA,NA,NA,NA,NA,Fairness outputs unavailable in Task6
+LightGBM,0.8370,0.4947,NA,NA,NA,NA,NA,NA,Fairness outputs unavailable in Task6
+LSTM,0.8208,0.4523,0.0026,0.0640,0.1820,0.0233,0.0971,0.1939,Task4 RNN baseline
+Standard Transformer,0.8252,0.4547,0.0068,0.0554,0.1761,0.0133,0.1967,0.2076,Task4 attention baseline
+ChronoFormer,0.8251,0.4615,0.0192,0.0795,0.1824,0.0026,0.1058,0.2390,Task4 temporal baseline
+PatchTST,0.8209,0.4456,0.0146,0.0605,0.1825,0.0149,0.1089,0.2816,Task4 patch-based baseline
+Pretrained TST,0.8307,0.4804,NA,NA,NA,NA,NA,NA,Fairness outputs unavailable in Task6
+TGT Temporal-only,0.8172,0.4328,0.0023,0.0783,0.1836,0.0388,0.0661,0.1895,Graph-based: temporal features only
+TGT Clinical-only,0.8235,0.4406,0.0094,0.0639,0.1774,0.0105,0.1459,0.2144,Graph-based: proposed method
+TGT Full,0.8175,0.4308,0.0098,0.0709,0.2259,0.0157,0.1379,0.2677,Graph-based: combined features

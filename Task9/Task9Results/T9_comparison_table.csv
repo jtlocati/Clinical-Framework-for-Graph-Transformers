@@ -1,0 +1,13 @@
+model,method,overall_auroc,overall_auprc,max_auroc_gap,max_auprc_gap,tpr_gap
+LSTM,Original_GlobalThresh,0.8252,0.4457,0.1921,0.2595,0.3166
+LSTM,Original_PerGroupThresh,0.8252,0.4457,0.1921,0.2595,0.0344
+LSTM,Platt_GlobalThresh,0.8252,0.4457,0.1921,0.2595,0.3166
+LSTM,Platt_PerGroupThresh,0.8252,0.4457,0.1921,0.2595,0.0344
+LSTM,Isotonic_GlobalThresh,0.8288,0.434,0.1827,0.251,0.3166
+LSTM,Isotonic_PerGroupThresh,0.8288,0.434,0.1827,0.251,0.0785
+tgt_full_graph,Original_GlobalThresh,0.8175,0.4308,0.2259,0.2677,0.35
+tgt_full_graph,Original_PerGroupThresh,0.8175,0.4308,0.2259,0.2677,0.0207
+tgt_full_graph,Platt_GlobalThresh,0.8175,0.4308,0.2259,0.2677,0.35
+tgt_full_graph,Platt_PerGroupThresh,0.8175,0.4308,0.2259,0.2677,0.0207
+tgt_full_graph,Isotonic_GlobalThresh,0.8208,0.4238,0.2326,0.2692,0.35
+tgt_full_graph,Isotonic_PerGroupThresh,0.8208,0.4238,0.2326,0.2692,0.0804

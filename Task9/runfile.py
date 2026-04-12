@@ -25,7 +25,9 @@ def main():
     if os.path.exists(CACHE_PATH):
         print(f"{config6.BAG} Loading cached predictions from {CACHE_PATH} {config6.BAG}")
         with open(CACHE_PATH, "rb") as f:
-            predictions = pickle.load(f)
+            cache = pickle.load(f)
+        predictions = cache["predictions"]
+        test_ids = cache["test_ids"]
         print(f"Models Loaded: {list(predictions.keys())}")
     else:
         print(f"{config6.BAG} TRAINING MODELS (averaging across seeds) {config6.BAG}")
@@ -42,27 +44,21 @@ def main():
                     all_predictions[model] = []
                 all_predictions[model].append((yt, yp))
 
-        # Average predictions across seeds
         predictions = {}
         for model, pred_list in all_predictions.items():
             avg_prob = numpy.mean([yp for _, yp in pred_list], axis=0)
-            y_true = pred_list[0][0]  # labels are the same across seeds
+            y_true = pred_list[0][0]
             predictions[model] = (y_true, avg_prob)
         
         print(f"TEST SET: {len(test_ids):,}")
         print(f"Models Trained: {list(predictions.keys())}")
         
-        # Cache for future runs
         with open(CACHE_PATH, "wb") as f:
-            pickle.dump(predictions, f)
+            pickle.dump({"predictions": predictions, "test_ids": test_ids}, f)
         print(f"Predictions cached to {CACHE_PATH}")
 
     print(f"{config9.BAG} Loading Demographics + Creating Masks {config9.BAG}")
     demographics = eval6.load_demographics()
-    # Get test_ids from first prediction for masks
-    first_model = list(predictions.keys())[0]
-    y_true_sample = predictions[first_model][0]
-    test_ids = numpy.arange(len(y_true_sample))  # Use sample indices as test_ids
     masks = eval6.BuildMasks(test_ids, demographics)
 
     print(f"{config6.BAG} Calibrating all models {config6.BAG}")

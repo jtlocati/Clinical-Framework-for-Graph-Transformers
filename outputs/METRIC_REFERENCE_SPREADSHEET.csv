@@ -1,0 +1,67 @@
+Model,Source_Task,Metric_Type,AUROC_or_Primary,AUROC_std,AUPRC_or_Secondary,AUPRC_std,Additional_Info,Seeds_Included,File_Location
+Logistic Regression,Task4,Aggregated Benchmark,0.8060,0.0094,0.4412,0.0132,Test set average,42/123/2024,Task4/results/benchmark_results.csv
+Logistic Regression,Task4,Seed 42,0.8058,NA,0.4275,NA,Test set,42,Task4/results/benchmark_results_full.json
+Logistic Regression,Task4,Seed 123,0.8175,NA,0.4591,NA,Test set,123,Task4/results/benchmark_results_full.json
+Logistic Regression,Task4,Seed 2024,0.7945,NA,0.4372,NA,Test set,2024,Task4/results/benchmark_results_full.json
+LightGBM,Task4,Aggregated Benchmark,0.8370,0.0085,0.4947,0.0205,Test set average,42/123/2024,Task4/results/benchmark_results.csv
+LightGBM,Task4,Seed 42,0.8312,NA,0.4675,NA,Test set,42,Task4/results/benchmark_results_full.json
+LightGBM,Task4,Seed 123,0.8490,NA,0.5169,NA,Test set,123,Task4/results/benchmark_results_full.json
+LightGBM,Task4,Seed 2024,0.8308,NA,0.4998,NA,Test set,2024,Task4/results/benchmark_results_full.json
+LSTM,Task4,Aggregated Benchmark,0.8284,0.0115,0.4712,0.0241,Test set average,42/123/2024,Task4/results/benchmark_results.csv
+LSTM,Task4,Seed 42,0.8246,NA,0.4398,NA,Test set,42,Task4/results/benchmark_results_full.json
+LSTM,Task4,Seed 123,0.8440,NA,0.4982,NA,Test set,123,Task4/results/benchmark_results_full.json
+LSTM,Task4,Seed 2024,0.8165,NA,0.4757,NA,Test set,2024,Task4/results/benchmark_results_full.json
+LSTM,Task6,Fairness Analysis,0.8208,NA,0.4523,NA,Overall test performance,42/123/2024,Task6/results_T6/T6_fairness_table.csv
+LSTM,Task7,Intervention Original,0.8248,NA,0.4462,NA,Seed 42 test,42,Task7/results/final_tables/task7_intervention_comparison.csv
+LSTM,Task7,Intervention Race Balanced,0.8163,NA,0.4170,NA,Seed 42 test,42,Task7/results/final_tables/task7_intervention_comparison.csv
+LSTM,Task7,Intervention Race Weighted Cap 10,0.8171,NA,0.4367,NA,Seed 42 test,42,Task7/results/final_tables/task7_intervention_comparison.csv
+LSTM,Task7,Intervention Race Weighted Cap 5,0.8188,NA,0.4453,NA,Seed 42 test,42,Task7/results/final_tables/task7_intervention_comparison.csv
+LSTM,Task9,Original Global Threshold,0.8232,NA,0.4569,NA,Test set,42/123/2024,Task9/Task9Results/T9_LSTM_Original_GlobalThresh_metrics.csv
+Standard Transformer,Task4,Aggregated Benchmark,0.8317,0.0113,0.4846,0.0287,Test set average,42/123/2024,Task4/results/benchmark_results.csv
+Standard Transformer,Task4,Seed 42,0.8222,NA,0.4583,NA,Test set,42,Task4/results/benchmark_results_full.json
+Standard Transformer,Task4,Seed 123,0.8383,NA,0.4950,NA,Test set,123,Task4/results/benchmark_results_full.json
+Standard Transformer,Task4,Seed 2024,0.8300,NA,0.4747,NA,Test set,2024,Task4/results/benchmark_results_full.json
+Standard Transformer,Task6,Fairness Analysis,0.8252,NA,0.4547,NA,Overall test performance,42/123/2024,Task6/results_T6/T6_fairness_table.csv
+Standard Transformer,Task9,Original Global Threshold,0.8270,NA,0.4513,NA,Test set,42/123/2024,Task9/Task9Results/T9_StandardTransformer_Original_GlobalThresh_metrics.csv
+ChronoFormer,Task4,Aggregated Benchmark,0.8306,0.0069,0.4799,0.0186,Test set average,42/123/2024,Task4/results/benchmark_results.csv
+ChronoFormer,Task4,Seed 42,0.8308,NA,0.4693,NA,Test set,42,Task4/results/benchmark_results_full.json
+ChronoFormer,Task4,Seed 123,0.8375,NA,0.4946,NA,Test set,123,Task4/results/benchmark_results_full.json
+ChronoFormer,Task4,Seed 2024,0.8291,NA,0.4812,NA,Test set,2024,Task4/results/benchmark_results_full.json
+ChronoFormer,Task6,Fairness Analysis,0.8251,NA,0.4615,NA,Overall test performance,42/123/2024,Task6/results_T6/T6_fairness_table.csv
+ChronoFormer,Task9,Original Global Threshold,0.8210,NA,0.4475,NA,Test set,42/123/2024,Task9/Task9Results/T9_ChronoFormer_Original_GlobalThresh_metrics.csv
+PatchTST,Task4,Aggregated Benchmark,0.8225,0.0076,0.4631,0.0203,Test set average,42/123/2024,Task4/results/benchmark_results.csv
+PatchTST,Task4,Seed 42,0.8172,NA,0.4381,NA,Test set,42,Task4/results/benchmark_results_full.json
+PatchTST,Task4,Seed 123,0.8289,NA,0.4689,NA,Test set,123,Task4/results/benchmark_results_full.json
+PatchTST,Task4,Seed 2024,0.8206,NA,0.4597,NA,Test set,2024,Task4/results/benchmark_results_full.json
+PatchTST,Task6,Fairness Analysis,0.8209,NA,0.4456,NA,Overall test performance,42/123/2024,Task6/results_T6/T6_fairness_table.csv
+PatchTST,Task9,Original Global Threshold,0.8142,NA,0.4330,NA,Test set,42/123/2024,Task9/Task9Results/T9_PatchTST_Original_GlobalThresh_metrics.csv
+Pretrained TST,Task4,Aggregated Benchmark,0.8307,0.0102,0.4804,0.0263,Test set average,42/123/2024,Task4/results/benchmark_results.csv
+Pretrained TST,Task4,Seed 42,0.8295,NA,0.4677,NA,Test set,42,Task4/results/benchmark_results_full.json
+Pretrained TST,Task4,Seed 123,0.8397,NA,0.4924,NA,Test set,123,Task4/results/benchmark_results_full.json
+Pretrained TST,Task4,Seed 2024,0.8258,NA,0.4844,NA,Test set,2024,Task4/results/benchmark_results_full.json
+TGT Temporal-only,Task5,Aggregated Summary,0.8306,0.0147,0.4682,0.0339,Across 3 seeds,42/123/2024,Task5/results/T5_summary.csv
+TGT Temporal-only,Task6,Fairness Analysis,0.8172,NA,0.4328,NA,Overall test performance,42/123/2024,Task6/results_T6/T6_fairness_table.csv
+TGT Temporal-only,Task9,Original Global Threshold,0.8172,NA,0.4328,NA,Test set,42/123/2024,Task9/Task9Results/T9_tgt_temporal_only_Original_GlobalThresh_metrics.csv
+TGT Temporal-only,Figures,Seed 42,0.8172,NA,0.4328,NA,Test set,42,figures/data/main_results.csv
+TGT Temporal-only,Figures,Seed 123,0.8463,NA,0.5004,NA,Test set,123,figures/data/main_results.csv
+TGT Temporal-only,Figures,Seed 2024,0.8282,NA,0.4713,NA,Test set,2024,figures/data/main_results.csv
+TGT Clinical-only,Task5,Aggregated Summary,0.8319,0.0114,0.4736,0.0308,Across 3 seeds,42/123/2024,Task5/results/T5_summary.csv
+TGT Clinical-only,Task6,Fairness Analysis,0.8235,NA,0.4406,NA,Overall test performance,42/123/2024,Task6/results_T6/T6_fairness_table.csv
+TGT Clinical-only,Task9,Original Global Threshold,0.8235,NA,0.4406,NA,Test set,42/123/2024,Task9/Task9Results/T9_tgt_clinical_only_Original_GlobalThresh_metrics.csv
+TGT Clinical-only,Figures,Seed 42,0.8235,NA,0.4406,NA,Test set,42,figures/data/main_results.csv
+TGT Clinical-only,Figures,Seed 123,0.8449,NA,0.5015,NA,Test set,123,figures/data/main_results.csv
+TGT Clinical-only,Figures,Seed 2024,0.8274,NA,0.4787,NA,Test set,2024,figures/data/main_results.csv
+TGT Full,Task5,Aggregated Summary,0.8300,0.0139,0.4708,0.0361,Across 3 seeds,42/123/2024,Task5/results/T5_summary.csv
+TGT Full,Task6,Fairness Analysis,0.8175,NA,0.4308,NA,Overall test performance,42/123/2024,Task6/results_T6/T6_fairness_table.csv
+TGT Full,Task7,Intervention Original,0.8236,NA,0.4444,NA,Seed 42 test,42,Task7/results/final_tables/task7_intervention_comparison.csv
+TGT Full,Task7,Intervention Race Balanced,0.8059,NA,0.4165,NA,Seed 42 test,42,Task7/results/final_tables/task7_intervention_comparison.csv
+TGT Full,Task7,Intervention Race Weighted Cap 10,0.8143,NA,0.4330,NA,Seed 42 test,42,Task7/results/final_tables/task7_intervention_comparison.csv
+TGT Full,Task7,Intervention Race Weighted Cap 5,0.8108,NA,0.4377,NA,Seed 42 test,42,Task7/results/final_tables/task7_intervention_comparison.csv
+TGT Full,Task7,Intervention Race Weighted Cap 15,0.8155,NA,0.4332,NA,Seed 42 test,42,Task7/results/final_tables/task7_intervention_comparison.csv
+TGT Full,Task9,Original Global Threshold,0.8175,NA,0.4308,NA,Test set,42/123/2024,Task9/Task9Results/T9_tgt_full_graph_Original_GlobalThresh_metrics.csv
+TGT Full,Figures,Seed 42,0.8175,NA,0.4308,NA,Test set,42,figures/data/main_results.csv
+TGT Full,Figures,Seed 123,0.8449,NA,0.5011,NA,Test set,123,figures/data/main_results.csv
+TGT Full,Figures,Seed 2024,0.8275,NA,0.4805,NA,Test set,2024,figures/data/main_results.csv
+LSTM,Figures,Seed 42,0.8248,NA,0.4462,NA,Test set,42,figures/data/main_results.csv
+LSTM,Figures,Seed 123,0.8433,NA,0.4990,NA,Test set,123,figures/data/main_results.csv
+LSTM,Figures,Seed 2024,0.8162,NA,0.4740,NA,Test set,2024,figures/data/main_results.csv

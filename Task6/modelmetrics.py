@@ -5,7 +5,7 @@ import numpy
 import torch
 import sklearn.metrics
 
-from Task4.experiment import run_single
+from Task4.experiment import run_single, RunSingleWithPred
 from Task5 import ClinGroups, Graph, Models, Train
 
 import Task6.config
@@ -30,7 +30,7 @@ def auroc(model, loader, mask, device):
             xb = xb.to(device)
             ps.append(torch.sigmoid(model(xb, mask)).cpu().numpy())
             ys.append(yb.numpy())
-        return sklearn.metrics.roc_auc_score(numpy.concatenate(ys), numpy.concatenate(ps))
+    return sklearn.metrics.roc_auc_score(numpy.concatenate(ys), numpy.concatenate(ps))
 
 def Predict(model, loader, mask, device):
     model.eval()
@@ -41,7 +41,7 @@ def Predict(model, loader, mask, device):
             xb = xb.to(device)
             ps.append(torch.sigmoid(model(xb, mask)).cpu().numpy())
             ys.append(yb.numpy())
-        return numpy.concatenate(ys), numpy.concatenate(ps)
+    return numpy.concatenate(ys), numpy.concatenate(ps)
     
 
 #warmup cosine -> Task5.Train.Warmup
@@ -51,9 +51,9 @@ def TAPTGT(varient: str, splits: dict, seed: int, device: str = "cpu") -> tuple:
     TrainConfig = ClinGroups.TrainConfig()
 
     if torch.cuda.is_available():
-        device = torch.device
+        device = torch.device("cuda")
     else:
-        device = "cpu"
+        device = torch.device("cpu")
 
     #Node Features
     X_Train = Graph.PrepInput(splits["train"]["X"], splits["train"]["M"])
@@ -65,8 +65,8 @@ def TAPTGT(varient: str, splits: dict, seed: int, device: str = "cpu") -> tuple:
 
 
     TrainLoader = torch.utils.data.DataLoader(GraphDS(X_Train, Y_Train), batch_size=TrainConfig.batch, shuffle=True, num_workers=0, pin_memory=True)
-    ValidateLoader = torch.utils.data.DataLoader(GraphDS(X_Validation, Y_Validation), batch_size=TrainConfig.batch, shuffle=True, num_workers=0, pin_memory=True )
-    TestLoader = torch.utils.data.DataLoader(GraphDS(X_Test, Y_Test), batch_size=TrainConfig, shuffle=True, num_workers=0, pin_memory=True)
+    ValidateLoader = torch.utils.data.DataLoader(GraphDS(X_Validation, Y_Validation), batch_size=TrainConfig.batch, shuffle=False, num_workers=0, pin_memory=True )
+    TestLoader = torch.utils.data.DataLoader(GraphDS(X_Test, Y_Test), batch_size=TrainConfig.batch, shuffle=False, num_workers=0, pin_memory=True)
 
     adj = Graph.AdjType(varient, ModelConfig.seq_len)
     attention_mask = Graph.ADJ2AtMask(adj).to(device)
@@ -81,7 +81,7 @@ def TAPTGT(varient: str, splits: dict, seed: int, device: str = "cpu") -> tuple:
     criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_wt)
     print(f"{Task6.config.AG}pos_weight: raw={raw_pw:.2f}, capped={capped:.2f}{Task6.config.AG}")
 
-    Optimser = torch.optim.AdamW(model.parameters(), lr=ModelConfig, weight_decay=TrainConfig.WeightDecay)
+    Optimser = torch.optim.AdamW(model.parameters(), lr=TrainConfig.Lr, weight_decay=TrainConfig.WeightDecay)
     Sched = Train.Warmup(Optimser, TrainConfig.warmup_epochs, TrainConfig.epochs)
 
     #Train -> val -> Test
@@ -90,7 +90,7 @@ def TAPTGT(varient: str, splits: dict, seed: int, device: str = "cpu") -> tuple:
     patience = 0
 
     #Train
-    for epoch in range(1, TrainConfig.epoch + 1):
+    for epoch in range(1, TrainConfig.epochs + 1):
         model.train()
         for xb, yb in TrainLoader:
             xb, yb = xb.to(device), yb.float().to(device)
@@ -126,12 +126,9 @@ def CollectMetrics(splits: dict, seed) -> dict:
     for name in Task6.config.BASELINE_MODELS:
         print(f"{Task6.config.BAG}\nTraining: {name}\n{Task6.config.BAG}")
         t0 = time.time()
-        result = run_single(name, splits, seed, device="cpu")
-        y_true = result["test_outputs"]["y_true"]
-        y_prob = result["test_outputs"]["y_prob"]
+        _, y_true, y_prob = RunSingleWithPred(name, splits, seed, device="cpu")
 
-
-        print(f"{Task6.config.BAG}  TRAINING FOR {name} DONE\n  Time {time.time() - t0:.1f}\nAUROC: {sklearn.metrics.roc_auc_score(y_true, y_prob):.4f}\n{Task6.config.BAG}")
+        print(f"{Task6.config.BAG}  TRAINING FOR {name} DONE\n  Time {time.time() - t0 :.1f}\nAUROC: {sklearn.metrics.roc_auc_score(y_true, y_prob):.4f}\n{Task6.config.BAG}")
 
         predictions[name] = (y_true, y_prob)
 
@@ -145,3 +142,23 @@ def CollectMetrics(splits: dict, seed) -> dict:
         predictions[label] = (y_true, y_prob)
 
     return predictions
+
+def CollectMetricsMultiSeed(splits: dict, seeds: list) -> tuple:
+    all_predictions = {}
+    per_seed = {}
+
+    for seed in seeds:
+        print(f"\n{'='*60}\nSEED: {seed}\n{'='*60}")
+        preds = CollectMetrics(splits, seed)
+        per_seed[seed] = preds
+        for model_name, (yt, yp) in preds.items():
+            if model_name not in all_predictions:
+                all_predictions[model_name] = []
+            all_predictions[model_name].append((yt, yp))
+
+    averaged = {}
+    for model_name, runs in all_predictions.items():
+        y_true = runs[0][0]
+        y_probs = numpy.stack([r[1] for r in runs], axis=0)
+        averaged[model_name] = (y_true, y_probs.mean(axis=0))
+    return averaged, per_seed

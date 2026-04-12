@@ -57,7 +57,7 @@ def FullModel(var: str, splits: dict, seed: int, device: str = "cuda") -> tuple:
         TrainConfigure = TrainConfig()
         #If CUDA is avalable then implement, while working localy leve device = "cpu"
         #device =  torch.device(device if torch.cuda.is_available() else "cpu")
-        device = "cpu"
+        device = torch.device(device if torch.cuda.is_available() else "cpu")
 
         #Define Grpah Nodes to plot on all model types
         x_train = Graph.PrepInput(splits["train"]["X"], splits["train"]["M"])

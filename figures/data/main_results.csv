@@ -1,0 +1,13 @@
+dataset,task,model,seed,split,auroc,auprc,loss
+MIMIC-IV,ICU Mortality,TGT-Temporal,42,test,0.8172,0.4328,
+MIMIC-IV,ICU Mortality,TGT-Clinical,42,test,0.8235,0.4406,
+MIMIC-IV,ICU Mortality,TGT-Full,42,test,0.8175,0.4308,
+MIMIC-IV,ICU Mortality,TGT-Temporal,123,test,0.8463,0.5004,
+MIMIC-IV,ICU Mortality,TGT-Clinical,123,test,0.8449,0.5015,
+MIMIC-IV,ICU Mortality,TGT-Full,123,test,0.8449,0.5011,
+MIMIC-IV,ICU Mortality,TGT-Temporal,2024,test,0.8282,0.4713,
+MIMIC-IV,ICU Mortality,TGT-Clinical,2024,test,0.8274,0.4787,
+MIMIC-IV,ICU Mortality,TGT-Full,2024,test,0.8275,0.4805,
+MIMIC-IV,ICU Mortality,LSTM,42,test,0.8247783885504877,0.4461834346288969,
+MIMIC-IV,ICU Mortality,LSTM,123,test,0.843293910195188,0.499039210116055,
+MIMIC-IV,ICU Mortality,LSTM,2024,test,0.8161734794943085,0.4739736054531724,

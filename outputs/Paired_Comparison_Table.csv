@@ -1,0 +1,6 @@
+Baseline Model,ΔAUROC Seed 42,ΔAUROC Seed 123,ΔAUROC Seed 2024,ΔAUROC Mean,ΔAUROC SD,ΔAUPRC Seed 42,ΔAUPRC Seed 123,ΔAUPRC Seed 2024,ΔAUPRC Mean,ΔAUPRC SD,TGT Clinical Wins (AUROC),Interpretation
+Standard Transformer,+0.0020,-0.0025,+0.0013,+0.0003,0.0024,-0.0064,-0.0150,-0.0115,-0.0110,0.0043,2/3,Essentially tied on AUROC; ST better on AUPRC
+ChronoFormer,-0.0010,+0.0047,+0.0002,+0.0013,0.0030,-0.0155,+0.0000,-0.0033,-0.0063,0.0082,2/3,Statistical tie; inconsistent AUPRC
+LSTM,-0.0011,+0.0009,+0.0109,+0.0036,0.0064,+0.0008,+0.0033,+0.0030,+0.0024,0.0014,2/3,Marginal inconsistent advantage
+Pretrained TST,+0.0021,+0.0000,+0.0014,+0.0012,0.0011,-0.0058,-0.0088,-0.0059,-0.0068,0.0017,2/3,Extremely small differences; PT better on AUPRC
+PatchTST,+0.0096,+0.0124,+0.0063,+0.0094,0.0031,+0.0056,+0.0191,+0.0068,+0.0105,0.0075,3/3,Clear consistent advantage for TGT Clinical
