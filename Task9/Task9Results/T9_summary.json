@@ -1,13 +1,12 @@
 {
-  "seed": 42,
+  "seed": [
+    42
+  ],
   "models": [
     "LSTM",
     "StandardTransformer",
     "ChronoFormer",
-    "PatchTST",
-    "tgt_temporal_only",
-    "tgt_clinical_only",
-    "tgt_full_graph"
+    "PatchTST"
   ],
   "methods": [
     "Original_GlobalThresh",
@@ -21,429 +20,246 @@
     {
       "model": "LSTM",
       "method": "Original_GlobalThresh",
-      "overall_auroc": 0.8232,
-      "overall_auprc": 0.4569,
-      "max_auroc_gap": 0.1825,
-      "max_auprc_gap": 0.2383,
-      "tpr_gap": 0.3333
+      "overall_auroc": 0.8247,
+      "overall_auprc": 0.4591,
+      "max_auroc_gap": 0.1922,
+      "max_auprc_gap": 0.196,
+      "tpr_gap": 0.2666
     },
     {
       "model": "LSTM",
       "method": "Original_PerGroupThresh",
-      "overall_auroc": 0.8232,
-      "overall_auprc": 0.4569,
-      "max_auroc_gap": 0.1825,
-      "max_auprc_gap": 0.2383,
-      "tpr_gap": 0.0197
+      "overall_auroc": 0.8247,
+      "overall_auprc": 0.4591,
+      "max_auroc_gap": 0.1922,
+      "max_auprc_gap": 0.196,
+      "tpr_gap": 0.0175
     },
     {
       "model": "LSTM",
       "method": "Platt_GlobalThresh",
-      "overall_auroc": 0.8239,
-      "overall_auprc": 0.4587,
-      "max_auroc_gap": 0.1822,
-      "max_auprc_gap": 0.2407,
-      "tpr_gap": 0.3333
+      "overall_auroc": 0.8247,
+      "overall_auprc": 0.4591,
+      "max_auroc_gap": 0.1922,
+      "max_auprc_gap": 0.196,
+      "tpr_gap": 0.2666
     },
     {
       "model": "LSTM",
       "method": "Platt_PerGroupThresh",
-      "overall_auroc": 0.8239,
-      "overall_auprc": 0.4587,
-      "max_auroc_gap": 0.1822,
-      "max_auprc_gap": 0.2407,
-      "tpr_gap": 0.015
+      "overall_auroc": 0.8247,
+      "overall_auprc": 0.4591,
+      "max_auroc_gap": 0.1922,
+      "max_auprc_gap": 0.196,
+      "tpr_gap": 0.0349
     },
     {
       "model": "LSTM",
       "method": "Isotonic_GlobalThresh",
-      "overall_auroc": 0.825,
-      "overall_auprc": 0.4664,
-      "max_auroc_gap": 0.1809,
-      "max_auprc_gap": 0.2453,
-      "tpr_gap": 0.3333
+      "overall_auroc": 0.8288,
+      "overall_auprc": 0.4513,
+      "max_auroc_gap": 0.1863,
+      "max_auprc_gap": 0.2014,
+      "tpr_gap": 0.2666
     },
     {
       "model": "LSTM",
       "method": "Isotonic_PerGroupThresh",
-      "overall_auroc": 0.825,
-      "overall_auprc": 0.4664,
-      "max_auroc_gap": 0.1809,
-      "max_auprc_gap": 0.2453,
-      "tpr_gap": 0.0167
+      "overall_auroc": 0.8288,
+      "overall_auprc": 0.4513,
+      "max_auroc_gap": 0.1863,
+      "max_auprc_gap": 0.2014,
+      "tpr_gap": 0.0885
     },
     {
       "model": "StandardTransformer",
       "method": "Original_GlobalThresh",
-      "overall_auroc": 0.827,
-      "overall_auprc": 0.4513,
-      "max_auroc_gap": 0.139,
-      "max_auprc_gap": 0.2316,
-      "tpr_gap": 0.2167
+      "overall_auroc": 0.8261,
+      "overall_auprc": 0.4469,
+      "max_auroc_gap": 0.165,
+      "max_auprc_gap": 0.2098,
+      "tpr_gap": 0.184
     },
     {
       "model": "StandardTransformer",
       "method": "Original_PerGroupThresh",
-      "overall_auroc": 0.827,
-      "overall_auprc": 0.4513,
-      "max_auroc_gap": 0.139,
-      "max_auprc_gap": 0.2316,
-      "tpr_gap": 0.0241
-    },
-    {
-      "model": "StandardTransformer",
-      "method": "Platt_GlobalThresh",
-      "overall_auroc": 0.8275,
-      "overall_auprc": 0.4521,
-      "max_auroc_gap": 0.1385,
-      "max_auprc_gap": 0.2315,
-      "tpr_gap": 0.1834
-    },
-    {
-      "model": "StandardTransformer",
-      "method": "Platt_PerGroupThresh",
-      "overall_auroc": 0.8275,
-      "overall_auprc": 0.4521,
-      "max_auroc_gap": 0.1385,
-      "max_auprc_gap": 0.2315,
+      "overall_auroc": 0.8261,
+      "overall_auprc": 0.4469,
+      "max_auroc_gap": 0.165,
+      "max_auprc_gap": 0.2098,
       "tpr_gap": 0.0207
     },
     {
       "model": "StandardTransformer",
-      "method": "Isotonic_GlobalThresh",
-      "overall_auroc": 0.8286,
-      "overall_auprc": 0.4586,
-      "max_auroc_gap": 0.138,
-      "max_auprc_gap": 0.2197,
-      "tpr_gap": 0.1834
+      "method": "Platt_GlobalThresh",
+      "overall_auroc": 0.8261,
+      "overall_auprc": 0.4469,
+      "max_auroc_gap": 0.165,
+      "max_auprc_gap": 0.2098,
+      "tpr_gap": 0.184
     },
     {
       "model": "StandardTransformer",
-      "method": "Isotonic_PerGroupThresh",
-      "overall_auroc": 0.8286,
-      "overall_auprc": 0.4586,
-      "max_auroc_gap": 0.138,
-      "max_auprc_gap": 0.2197,
-      "tpr_gap": 0.0218
-    },
-    {
-      "model": "ChronoFormer",
-      "method": "Original_GlobalThresh",
-      "overall_auroc": 0.821,
-      "overall_auprc": 0.4475,
-      "max_auroc_gap": 0.2042,
-      "max_auprc_gap": 0.2954,
-      "tpr_gap": 0.2919
-    },
-    {
-      "model": "ChronoFormer",
-      "method": "Original_PerGroupThresh",
-      "overall_auroc": 0.821,
-      "overall_auprc": 0.4475,
-      "max_auroc_gap": 0.2042,
-      "max_auprc_gap": 0.2954,
-      "tpr_gap": 0.0202
-    },
-    {
-      "model": "ChronoFormer",
-      "method": "Platt_GlobalThresh",
-      "overall_auroc": 0.8216,
-      "overall_auprc": 0.4487,
-      "max_auroc_gap": 0.2031,
-      "max_auprc_gap": 0.2958,
-      "tpr_gap": 0.2919
-    },
-    {
-      "model": "ChronoFormer",
       "method": "Platt_PerGroupThresh",
-      "overall_auroc": 0.8216,
-      "overall_auprc": 0.4487,
-      "max_auroc_gap": 0.2031,
-      "max_auprc_gap": 0.2958,
-      "tpr_gap": 0.0202
-    },
-    {
-      "model": "ChronoFormer",
-      "method": "Isotonic_GlobalThresh",
-      "overall_auroc": 0.8227,
-      "overall_auprc": 0.4555,
-      "max_auroc_gap": 0.2022,
-      "max_auprc_gap": 0.2939,
-      "tpr_gap": 0.2919
-    },
-    {
-      "model": "ChronoFormer",
-      "method": "Isotonic_PerGroupThresh",
-      "overall_auroc": 0.8227,
-      "overall_auprc": 0.4555,
-      "max_auroc_gap": 0.2022,
-      "max_auprc_gap": 0.2939,
+      "overall_auroc": 0.8261,
+      "overall_auprc": 0.4469,
+      "max_auroc_gap": 0.165,
+      "max_auprc_gap": 0.2098,
       "tpr_gap": 0.0333
     },
     {
-      "model": "PatchTST",
-      "method": "Original_GlobalThresh",
-      "overall_auroc": 0.8142,
-      "overall_auprc": 0.433,
-      "max_auroc_gap": 0.1911,
-      "max_auprc_gap": 0.2467,
-      "tpr_gap": 0.2833
-    },
-    {
-      "model": "PatchTST",
-      "method": "Original_PerGroupThresh",
-      "overall_auroc": 0.8142,
-      "overall_auprc": 0.433,
-      "max_auroc_gap": 0.1911,
-      "max_auprc_gap": 0.2467,
-      "tpr_gap": 0.0207
-    },
-    {
-      "model": "PatchTST",
-      "method": "Platt_GlobalThresh",
-      "overall_auroc": 0.815,
-      "overall_auprc": 0.4353,
-      "max_auroc_gap": 0.1895,
-      "max_auprc_gap": 0.2448,
-      "tpr_gap": 0.2833
-    },
-    {
-      "model": "PatchTST",
-      "method": "Platt_PerGroupThresh",
-      "overall_auroc": 0.815,
-      "overall_auprc": 0.4353,
-      "max_auroc_gap": 0.1895,
-      "max_auprc_gap": 0.2448,
-      "tpr_gap": 0.0141
-    },
-    {
-      "model": "PatchTST",
+      "model": "StandardTransformer",
       "method": "Isotonic_GlobalThresh",
-      "overall_auroc": 0.8161,
-      "overall_auprc": 0.4411,
-      "max_auroc_gap": 0.1901,
-      "max_auprc_gap": 0.2453,
-      "tpr_gap": 0.2833
+      "overall_auroc": 0.8292,
+      "overall_auprc": 0.4387,
+      "max_auroc_gap": 0.1684,
+      "max_auprc_gap": 0.21,
+      "tpr_gap": 0.184
     },
     {
-      "model": "PatchTST",
+      "model": "StandardTransformer",
       "method": "Isotonic_PerGroupThresh",
-      "overall_auroc": 0.8161,
-      "overall_auprc": 0.4411,
-      "max_auroc_gap": 0.1901,
-      "max_auprc_gap": 0.2453,
-      "tpr_gap": 0.0143
+      "overall_auroc": 0.8292,
+      "overall_auprc": 0.4387,
+      "max_auroc_gap": 0.1684,
+      "max_auprc_gap": 0.21,
+      "tpr_gap": 0.0432
     },
     {
-      "model": "tgt_temporal_only",
+      "model": "ChronoFormer",
       "method": "Original_GlobalThresh",
-      "overall_auroc": 0.8172,
-      "overall_auprc": 0.4328,
-      "max_auroc_gap": 0.1836,
-      "max_auprc_gap": 0.1895,
-      "tpr_gap": 0.3333
+      "overall_auroc": 0.8218,
+      "overall_auprc": 0.4579,
+      "max_auroc_gap": 0.1805,
+      "max_auprc_gap": 0.2591,
+      "tpr_gap": 0.2666
     },
     {
-      "model": "tgt_temporal_only",
+      "model": "ChronoFormer",
       "method": "Original_PerGroupThresh",
-      "overall_auroc": 0.8172,
-      "overall_auprc": 0.4328,
-      "max_auroc_gap": 0.1836,
-      "max_auprc_gap": 0.1895,
-      "tpr_gap": 0.0167
+      "overall_auroc": 0.8218,
+      "overall_auprc": 0.4579,
+      "max_auroc_gap": 0.1805,
+      "max_auprc_gap": 0.2591,
+      "tpr_gap": 0.0205
     },
     {
-      "model": "tgt_temporal_only",
+      "model": "ChronoFormer",
       "method": "Platt_GlobalThresh",
-      "overall_auroc": 0.8177,
-      "overall_auprc": 0.4338,
-      "max_auroc_gap": 0.1833,
-      "max_auprc_gap": 0.1871,
-      "tpr_gap": 0.3333
+      "overall_auroc": 0.8218,
+      "overall_auprc": 0.4579,
+      "max_auroc_gap": 0.1805,
+      "max_auprc_gap": 0.2591,
+      "tpr_gap": 0.2666
     },
     {
-      "model": "tgt_temporal_only",
+      "model": "ChronoFormer",
       "method": "Platt_PerGroupThresh",
-      "overall_auroc": 0.8177,
-      "overall_auprc": 0.4338,
-      "max_auroc_gap": 0.1833,
-      "max_auprc_gap": 0.1871,
+      "overall_auroc": 0.8218,
+      "overall_auprc": 0.4579,
+      "max_auroc_gap": 0.1805,
+      "max_auprc_gap": 0.2591,
       "tpr_gap": 0.0334
     },
     {
-      "model": "tgt_temporal_only",
+      "model": "ChronoFormer",
       "method": "Isotonic_GlobalThresh",
-      "overall_auroc": 0.8185,
-      "overall_auprc": 0.4431,
-      "max_auroc_gap": 0.1825,
-      "max_auprc_gap": 0.1943,
-      "tpr_gap": 0.3333
+      "overall_auroc": 0.825,
+      "overall_auprc": 0.4489,
+      "max_auroc_gap": 0.1806,
+      "max_auprc_gap": 0.2532,
+      "tpr_gap": 0.2666
     },
     {
-      "model": "tgt_temporal_only",
+      "model": "ChronoFormer",
       "method": "Isotonic_PerGroupThresh",
-      "overall_auroc": 0.8185,
-      "overall_auprc": 0.4431,
-      "max_auroc_gap": 0.1825,
-      "max_auprc_gap": 0.1943,
-      "tpr_gap": 0.0167
+      "overall_auroc": 0.825,
+      "overall_auprc": 0.4489,
+      "max_auroc_gap": 0.1806,
+      "max_auprc_gap": 0.2532,
+      "tpr_gap": 0.0505
     },
     {
-      "model": "tgt_clinical_only",
+      "model": "PatchTST",
       "method": "Original_GlobalThresh",
-      "overall_auroc": 0.8235,
-      "overall_auprc": 0.4406,
-      "max_auroc_gap": 0.1774,
-      "max_auprc_gap": 0.2144,
-      "tpr_gap": 0.4
+      "overall_auroc": 0.8207,
+      "overall_auprc": 0.4437,
+      "max_auroc_gap": 0.186,
+      "max_auprc_gap": 0.2313,
+      "tpr_gap": 0.2834
     },
     {
-      "model": "tgt_clinical_only",
+      "model": "PatchTST",
       "method": "Original_PerGroupThresh",
-      "overall_auroc": 0.8235,
-      "overall_auprc": 0.4406,
-      "max_auroc_gap": 0.1774,
-      "max_auprc_gap": 0.2144,
-      "tpr_gap": 0.0166
+      "overall_auroc": 0.8207,
+      "overall_auprc": 0.4437,
+      "max_auroc_gap": 0.186,
+      "max_auprc_gap": 0.2313,
+      "tpr_gap": 0.0184
     },
     {
-      "model": "tgt_clinical_only",
+      "model": "PatchTST",
       "method": "Platt_GlobalThresh",
-      "overall_auroc": 0.8241,
-      "overall_auprc": 0.4427,
-      "max_auroc_gap": 0.1767,
-      "max_auprc_gap": 0.2134,
-      "tpr_gap": 0.4
+      "overall_auroc": 0.8207,
+      "overall_auprc": 0.4437,
+      "max_auroc_gap": 0.186,
+      "max_auprc_gap": 0.2313,
+      "tpr_gap": 0.2834
     },
     {
-      "model": "tgt_clinical_only",
+      "model": "PatchTST",
       "method": "Platt_PerGroupThresh",
-      "overall_auroc": 0.8241,
-      "overall_auprc": 0.4427,
-      "max_auroc_gap": 0.1767,
-      "max_auprc_gap": 0.2134,
-      "tpr_gap": 0.0166
+      "overall_auroc": 0.8207,
+      "overall_auprc": 0.4437,
+      "max_auroc_gap": 0.186,
+      "max_auprc_gap": 0.2313,
+      "tpr_gap": 0.0184
     },
     {
-      "model": "tgt_clinical_only",
+      "model": "PatchTST",
       "method": "Isotonic_GlobalThresh",
-      "overall_auroc": 0.8253,
-      "overall_auprc": 0.4496,
-      "max_auroc_gap": 0.1765,
-      "max_auprc_gap": 0.218,
-      "tpr_gap": 0.4
+      "overall_auroc": 0.8243,
+      "overall_auprc": 0.4353,
+      "max_auroc_gap": 0.1832,
+      "max_auprc_gap": 0.231,
+      "tpr_gap": 0.2834
     },
     {
-      "model": "tgt_clinical_only",
+      "model": "PatchTST",
       "method": "Isotonic_PerGroupThresh",
-      "overall_auroc": 0.8253,
-      "overall_auprc": 0.4496,
-      "max_auroc_gap": 0.1765,
-      "max_auprc_gap": 0.218,
-      "tpr_gap": 0.0333
-    },
-    {
-      "model": "tgt_full_graph",
-      "method": "Original_GlobalThresh",
-      "overall_auroc": 0.8175,
-      "overall_auprc": 0.4308,
-      "max_auroc_gap": 0.2259,
-      "max_auprc_gap": 0.2677,
-      "tpr_gap": 0.35
-    },
-    {
-      "model": "tgt_full_graph",
-      "method": "Original_PerGroupThresh",
-      "overall_auroc": 0.8175,
-      "overall_auprc": 0.4308,
-      "max_auroc_gap": 0.2259,
-      "max_auprc_gap": 0.2677,
-      "tpr_gap": 0.0207
-    },
-    {
-      "model": "tgt_full_graph",
-      "method": "Platt_GlobalThresh",
-      "overall_auroc": 0.8181,
-      "overall_auprc": 0.4328,
-      "max_auroc_gap": 0.2255,
-      "max_auprc_gap": 0.2684,
-      "tpr_gap": 0.3333
-    },
-    {
-      "model": "tgt_full_graph",
-      "method": "Platt_PerGroupThresh",
-      "overall_auroc": 0.8181,
-      "overall_auprc": 0.4328,
-      "max_auroc_gap": 0.2255,
-      "max_auprc_gap": 0.2684,
-      "tpr_gap": 0.0207
-    },
-    {
-      "model": "tgt_full_graph",
-      "method": "Isotonic_GlobalThresh",
-      "overall_auroc": 0.8192,
-      "overall_auprc": 0.4403,
-      "max_auroc_gap": 0.2254,
-      "max_auprc_gap": 0.2668,
-      "tpr_gap": 0.3333
-    },
-    {
-      "model": "tgt_full_graph",
-      "method": "Isotonic_PerGroupThresh",
-      "overall_auroc": 0.8192,
-      "overall_auprc": 0.4403,
-      "max_auroc_gap": 0.2254,
-      "max_auprc_gap": 0.2668,
-      "tpr_gap": 0.0207
+      "overall_auroc": 0.8243,
+      "overall_auprc": 0.4353,
+      "max_auroc_gap": 0.1832,
+      "max_auprc_gap": 0.231,
+      "tpr_gap": 0.0873
     }
   ],
   "best_method_LSTM": {
     "method": "Isotonic_PerGroupThresh",
-    "original_gap": 0.1825,
-    "best_gap": 0.1809,
-    "reduction": 0.0016,
-    "auroc": 0.825
+    "original_gap": 0.1922,
+    "best_gap": 0.1863,
+    "reduction": 0.0059,
+    "auroc": 0.8288
   },
   "best_method_StandardTransformer": {
-    "method": "Isotonic_PerGroupThresh",
-    "original_gap": 0.139,
-    "best_gap": 0.138,
-    "reduction": 0.001,
-    "auroc": 0.8286
+    "method": "Original_GlobalThresh",
+    "original_gap": 0.165,
+    "best_gap": 0.165,
+    "reduction": 0.0,
+    "auroc": 0.8261
   },
   "best_method_ChronoFormer": {
-    "method": "Isotonic_PerGroupThresh",
-    "original_gap": 0.2042,
-    "best_gap": 0.2022,
-    "reduction": 0.002,
-    "auroc": 0.8227
+    "method": "Original_GlobalThresh",
+    "original_gap": 0.1805,
+    "best_gap": 0.1805,
+    "reduction": 0.0,
+    "auroc": 0.8218
   },
   "best_method_PatchTST": {
-    "method": "Platt_PerGroupThresh",
-    "original_gap": 0.1911,
-    "best_gap": 0.1895,
-    "reduction": 0.0016,
-    "auroc": 0.815
-  },
-  "best_method_tgt_temporal_only": {
     "method": "Isotonic_PerGroupThresh",
-    "original_gap": 0.1836,
-    "best_gap": 0.1825,
-    "reduction": 0.0011,
-    "auroc": 0.8185
-  },
-  "best_method_tgt_clinical_only": {
-    "method": "Isotonic_PerGroupThresh",
-    "original_gap": 0.1774,
-    "best_gap": 0.1765,
-    "reduction": 0.0009,
-    "auroc": 0.8253
-  },
-  "best_method_tgt_full_graph": {
-    "method": "Isotonic_PerGroupThresh",
-    "original_gap": 0.2259,
-    "best_gap": 0.2254,
-    "reduction": 0.0005,
-    "auroc": 0.8192
+    "original_gap": 0.186,
+    "best_gap": 0.1832,
+    "reduction": 0.0028,
+    "auroc": 0.8243
   }
 }

@@ -201,4 +201,3 @@ def generate_all_plots(comparison_df: pandas.DataFrame, all_results: dict, save_
     # heatmap per model
     for model_name in all_results.keys():
         plot_method_heatmap(all_results, model_name, save_dir)
-

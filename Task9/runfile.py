@@ -17,47 +17,54 @@ import pickle
 
 def main():
     total_time = time.time()
-    print(f"{config6.BAG} LOADING DATA + TRAINING MODELS {config6.BAG}")
+    print(f"{config6.BAG} LOADING DATA {config6.BAG}")
     Rawx, M, y, ids = DataPipeline.run_pipeline()
-    all_predictions = {}
-    for seed in config6.seed:
-        print(f"\n{'='*60} SEED {seed} {'='*60}")
-        splits, means, stddev = DataPipeline.prepare_for_seed(Rawx, M, y, ids, seed)
-        test_ids = splits["test"]["ids"]
-        preds = modelmetrics.CollectMetrics(splits, seed)
-        for model, (yt, yp) in preds.items():
-            if model not in all_predictions:
-                all_predictions[model] = []
-            all_predictions[model].append((yt, yp))
-
-    # Average predictions across seeds
-    predictions = {}
-    for model, pred_list in all_predictions.items():
-        avg_prob = numpy.mean([yp for _, yp in pred_list], axis=0)
-        y_true = pred_list[0][0]  # labels are the same across seeds
-        predictions[model] = (y_true, avg_prob)
-    print(f"TEST SET: {len(test_ids):,}")
-
+    
     CACHE_PATH = os.path.join(config9.OUTPUT_DIR, "T9_predictions_cache.pkl")
 
     if os.path.exists(CACHE_PATH):
-        print("Loading cached predictions...")
+        print(f"{config6.BAG} Loading cached predictions from {CACHE_PATH} {config6.BAG}")
         with open(CACHE_PATH, "rb") as f:
-            predictions = pickle.load(f)
+            cache = pickle.load(f)
+        predictions = cache["predictions"]
+        test_ids = cache["test_ids"]
+        print(f"Models Loaded: {list(predictions.keys())}")
     else:
-        predictions = modelmetrics.CollectMetrics(splits, config6.seed)
-        with open(CACHE_PATH, "wb") as f:
-            pickle.dump(predictions, f)
-        print(f"Models Trained: {list(predictions.keys())}")
+        print(f"{config6.BAG} TRAINING MODELS (averaging across seeds) {config6.BAG}")
+        all_predictions = {}
+        test_ids = None
+        
+        for seed in config6.seed:
+            print(f"\n{'='*60} SEED {seed} {'='*60}")
+            splits, means, stddev = DataPipeline.prepare_for_seed(Rawx, M, y, ids, seed)
+            test_ids = splits["test"]["ids"]
+            preds = modelmetrics.CollectMetrics(splits, seed)
+            for model, (yt, yp) in preds.items():
+                if model not in all_predictions:
+                    all_predictions[model] = []
+                all_predictions[model].append((yt, yp))
 
-    print(f"{config9.BAG} Loading Deomgraphics + Creating Masks {config9.BAG}")
+        predictions = {}
+        for model, pred_list in all_predictions.items():
+            avg_prob = numpy.mean([yp for _, yp in pred_list], axis=0)
+            y_true = pred_list[0][0]
+            predictions[model] = (y_true, avg_prob)
+        
+        print(f"TEST SET: {len(test_ids):,}")
+        print(f"Models Trained: {list(predictions.keys())}")
+        
+        with open(CACHE_PATH, "wb") as f:
+            pickle.dump({"predictions": predictions, "test_ids": test_ids}, f)
+        print(f"Predictions cached to {CACHE_PATH}")
+
+    print(f"{config9.BAG} Loading Demographics + Creating Masks {config9.BAG}")
     demographics = eval6.load_demographics()
     masks = eval6.BuildMasks(test_ids, demographics)
 
-    print(f"{config6.BAG} Calebrating subgroups {config6.BAG}")
+    print(f"{config6.BAG} Calibrating all models {config6.BAG}")
     calebrated_preds = calibration.CalAllModels(predictions, masks)
 
-    print(f"{config6.BAG} Calebrating All models {config6.BAG}")
+    print(f"{config9.BAG} Evaluating post-hoc methods {config9.BAG}")
     all_results = eval9.EvalAll(calebrated_preds, masks)
 
     print(f"{config9.BAG} Building Comparison Table {config9.BAG}")
