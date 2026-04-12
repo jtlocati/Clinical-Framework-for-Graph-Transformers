@@ -15,7 +15,7 @@ TRANSFORMMERS = ["full_graph"]
 
 SPLIT_SEED =  42 #same see for all cuz we are comparing directly
 ModelSeed = [42, 123, 2024]
-seed = [42]
+seed = [42, 123, 2024]
 
 AGE_BINS = [0, 40, 65, 200]
 AGE_LABELS = ["<40", "40-65", "65+"]
