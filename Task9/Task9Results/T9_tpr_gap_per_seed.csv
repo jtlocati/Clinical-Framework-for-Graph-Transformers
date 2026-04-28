@@ -1,0 +1,13 @@
+model,method,tpr_gap_mean,tpr_gap_std
+LSTM,Isotonic_GlobalThresh,0.3245,0.1211
+LSTM,Isotonic_PerGroupThresh,0.0593,0.0209
+LSTM,Original_GlobalThresh,0.1962,0.082
+LSTM,Original_PerGroupThresh,0.0235,0.0102
+LSTM,Platt_GlobalThresh,0.3003,0.1197
+LSTM,Platt_PerGroupThresh,0.0273,0.0098
+tgt_full_graph,Isotonic_GlobalThresh,0.4536,0.1701
+tgt_full_graph,Isotonic_PerGroupThresh,0.1563,0.0848
+tgt_full_graph,Original_GlobalThresh,0.2254,0.1134
+tgt_full_graph,Original_PerGroupThresh,0.0226,0.0017
+tgt_full_graph,Platt_GlobalThresh,0.3454,0.051
+tgt_full_graph,Platt_PerGroupThresh,0.0232,0.0105

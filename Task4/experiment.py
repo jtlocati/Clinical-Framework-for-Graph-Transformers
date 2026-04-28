@@ -88,7 +88,7 @@ def evaluate_neural(model: torch.nn.Module, loader, device) -> dict:
     model.eval()
     all_y, all_p = [], []
     with torch.no_grad():
-        for x, m, y in loader:
+        for _ids, x, m, y in loader:
             x, m = x.to(device), m.to(device)
             logits = model(x, m)
             probs = torch.sigmoid(logits).cpu().numpy()
@@ -103,7 +103,7 @@ def predict_neural(model, loader, device) -> tuple:
     all_y = []
     all_p = []
     with torch.no_grad():
-        for x, m, y in loader:
+        for _ids, x, m, y in loader:
             x = x.to(device)
             m = m.to(device)
             logits = model(x, m)
@@ -116,12 +116,6 @@ def predict_neural(model, loader, device) -> tuple:
         
 
 def train_neural(model: torch.nn.Module, loaders: dict, tc: config.TrainConfig = None, device: str = "cuda") -> dict:
-    """
-    Standard training loop with:
-      - Binary loss
-      - AdamW + cosine annealing
-      - Early stopping on val AUROC
-    """
     tc = tc or config.TrainConfig()
     device = torch.device(device if torch.cuda.is_available() else "cpu")
     model = model.to(device)
@@ -146,7 +140,7 @@ def train_neural(model: torch.nn.Module, loaders: dict, tc: config.TrainConfig =
         # train
         model.train()
         losses = []
-        for x, m, y in loaders["train"]:
+        for _ids, x, m, y in loaders["train"]:
             x, m, y = x.to(device), m.to(device), y.float().to(device)
             logits = model(x, m)
             loss = criterion(logits, y)
@@ -189,8 +183,6 @@ def train_neural(model: torch.nn.Module, loaders: dict, tc: config.TrainConfig =
 
 
 #  PretrainedTST two‑phase training
-
-
 def train_pretrained_tst(pretrain_model: PretrainedTSTForPretraining,
                          loaders: dict, device: str = "cuda") -> dict:
     """
