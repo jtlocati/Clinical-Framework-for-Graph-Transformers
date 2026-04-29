@@ -1,11 +1,3 @@
-"""
-Handles:
-  - Traditional model training (LogReg, LightGBM)
-  - Neural model training with early stopping
-  - PretrainedTST two phase training (pretrain -> fine tune)
-  - Metric computation (AUROC, AUPRC)
-"""
-
 import time
 import numpy
 import torch
