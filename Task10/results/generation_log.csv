@@ -1,0 +1,13 @@
+model,seed,status,n_test,elapsed_s
+TGTClinical,42,success,6182,1128.8
+TGTClinical,123,success,6182,1114.7
+TGTClinical,2024,success,6182,1105.7
+TGTTemporal,42,success,6182,1661.2
+TGTTemporal,123,success,6182,1352.8
+TGTTemporal,2024,success,6182,1596.0
+LSTM,42,success,6182,753.9
+LSTM,123,success,6182,826.7
+LSTM,2024,success,6182,765.1
+TGTFull,42,success,6182,1029.4
+TGTFull,123,success,6182,1458.0
+TGTFull,2024,success,6182,1176.2

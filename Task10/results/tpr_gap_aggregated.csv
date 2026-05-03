@@ -1,0 +1,5 @@
+model,tpr_gap_all_mean,tpr_gap_all_std,tpr_gap_sex_mean,tpr_gap_sex_std,tpr_gap_age_mean,tpr_gap_age_std,tpr_gap_race_mean,tpr_gap_race_std
+LSTM,0.3144,0.0499,0.0213,0.0114,0.128,0.0221,0.3144,0.0499
+TGTTemporal,0.3056,0.0283,0.0265,0.0011,0.0506,0.015,0.3056,0.0283
+TGTClinical,0.3667,0.0471,0.0235,0.012,0.1255,0.0294,0.3667,0.0471
+TGTFull,0.3111,0.0283,0.0256,0.022,0.1111,0.0195,0.3111,0.0283
