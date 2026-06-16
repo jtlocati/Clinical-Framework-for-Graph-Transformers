@@ -35,4 +35,20 @@ loudly instead of silently regenerating wrong numbers.
 paper tables; it stays in place. `analysis/corrected_eval.py` does **not** read the Task9
 cache, so the corrected results are unaffected by this quarantine.
 
-<!-- CANONICAL-ORIGINAL-REF: appended in commit group (c), see below -->
+## Canonical unmodified original (cite this for "was the evidence altered?")
+
+The deprecation guards (commit group c) are *additive only* — original logic is intact
+below each guard. The canonical pre-guard state is pinned here:
+
+- **Pre-guard reference commit** (state with quarantine done, scripts still unmodified):
+  `f2fda4977326725f8daf40ea9767fd4385f5ee19`
+- **Original pre-cleanup commit** (everything in its original location):
+  `1fb0ab7ce512080625786080e5d23ef67576cbff`
+- **Canonical unmodified `Task8/run_validation.py` blob:**
+  `8d0b9f84bcd77d8337625229bea239ae52a8a77f`
+  Retrieve with `git cat-file -p 8d0b9f84bcd77d8337625229bea239ae52a8a77f`
+  or `git show f2fda49:Task8/run_validation.py`.
+
+That blob is the canonical version containing the coupled split:
+`Task8/run_validation.py:141` `prepare_for_seed(X_raw, M, y, ids, args.seed)`
+→ `Task4/DataPipeline.py:345` `train_test_split(..., random_state=seed, ...)`.

@@ -1,5 +1,22 @@
 from __future__ import annotations
 
+# === DEPRECATED EVALUATION PATH (added by repo-cleanup; do not remove) ===
+# This is the coupled-split generator: prepare_for_seed(..., args.seed) ties the train/test
+# split seed to the model seed, so each seed scores a different cohort. It produced the
+# contaminated Task6 per-seed-resplit summaries. Authoritative source of record:
+# Task10/results/*_test_predictions.csv via analysis/corrected_eval.py.
+# See deprecated_stale_eval/README.md and outputs/race_gap_provenance.md.
+import os as _dep_os
+if _dep_os.environ.get("ALLOW_DEPRECATED_EVAL") != "1":
+    raise RuntimeError(
+        "DEPRECATED stale evaluation path; its outputs are contaminated "
+        "(split seed coupled to model seed). "
+        "Use Task10/results/*_test_predictions.csv via analysis/corrected_eval.py. "
+        "See deprecated_stale_eval/README.md. "
+        "Set ALLOW_DEPRECATED_EVAL=1 to run anyway (forensic re-runs only)."
+    )
+# === end deprecation guard ===
+
 import argparse
 import subprocess
 import sys

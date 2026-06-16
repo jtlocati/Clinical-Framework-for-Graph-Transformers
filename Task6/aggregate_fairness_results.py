@@ -1,3 +1,18 @@
+# === DEPRECATED EVALUATION PATH (added by repo-cleanup; do not remove) ===
+# This top-level script globs the now-quarantined Task6/results/*_disparity_summary.csv
+# (stale per-seed-resplit). Authoritative source of record:
+# Task10/results/*_test_predictions.csv via analysis/corrected_eval.py.
+# See deprecated_stale_eval/README.md and outputs/race_gap_provenance.md.
+import os as _dep_os
+if _dep_os.environ.get("ALLOW_DEPRECATED_EVAL") != "1":
+    raise RuntimeError(
+        "DEPRECATED stale evaluation path; its inputs were quarantined to "
+        "deprecated_stale_eval/. Use Task10/results/*_test_predictions.csv via "
+        "analysis/corrected_eval.py. "
+        "Set ALLOW_DEPRECATED_EVAL=1 to run anyway (forensic re-runs only)."
+    )
+# === end deprecation guard ===
+
 from pathlib import Path
 import pandas as pd
 
