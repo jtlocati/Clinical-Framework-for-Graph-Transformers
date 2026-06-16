@@ -1,0 +1,28 @@
+==============================================================================
+Task 1.1a - Corrected fairness re-evaluation notes (fixed-split Task10 preds)
+==============================================================================
+
+CLAIM (i)  'TGTFull achieves the smallest race AUROC gap under matched training':
+  fixed-split 3-seed mean race AUROC gap -> LSTM 0.1847 vs TGTFull 0.2090
+  paired LSTM-TGTFull race gap per seed: -0.0275 / -0.0384 / -0.0070  (mean -0.0243 +/- 0.0160)
+  TGTFull smaller in 0/3 seeds.
+  VERDICT: claim (i) REVERSES under the matched fixed split (TGTFull race gap is LARGER than LSTM in all 3 seeds).
+
+  Paired sex/age AUROC-gap differences (LSTM - TGTFull, fixed split):
+    sex : -0.0008 / +0.0045 / -0.0041  (mean -0.0001 +/- 0.0044; TGTFull smaller 1/3)
+    age : +0.0126 / +0.0020 / -0.0226  (mean -0.0027 +/- 0.0181; TGTFull smaller 2/3)
+
+TABLE 5 overall numbers (matched-training) reproduction check:
+  LSTM         AUROC 0.8219 (Table5 0.8281, d=-0.0062) | AUPRC 0.4460 (Table5 0.4731, d=-0.0271)
+  TGTTemporal  AUROC 0.8195 (Table5 0.8231, d=-0.0036) | AUPRC 0.4337 (Table5 0.4532, d=-0.0195)
+  TGTClinical  AUROC 0.8249 (Table5 0.8324, d=-0.0075) | AUPRC 0.4428 (Table5 0.4818, d=-0.0390)
+  TGTFull      AUROC 0.8193 (Table5 0.8328, d=-0.0135) | AUPRC 0.4345 (Table5 0.4825, d=-0.0480)
+  -> Table 5 overall AUROC does NOT reproduce from the fixed-split predictions (tolerance 0.005).
+
+CONFIRMED subgroup counts on the fixed split (identical across all 3 seeds,
+no longer drifting like the stale path's Asian 182/170/179):
+  sex : {'F': 2705, 'M': 3477}
+  age : {'40-65': 2132, '65+': 3579, '<40': 471}
+  race: {'Asian': 182, 'Black': 682, 'Hispanic': 239, 'Multipule': 2, 'Other': 447, 'Unknown': 580, 'White': 4050}
+  (race subgroups with n<30 excluded from gaps: ['Multipule'])
+

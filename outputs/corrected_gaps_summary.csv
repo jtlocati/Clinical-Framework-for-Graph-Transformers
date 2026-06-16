@@ -1,0 +1,19 @@
+model,attribute,overall_auroc_mean,overall_auroc_std,overall_auprc_mean,overall_auprc_std,gap_auroc_mean,gap_auroc_std,gap_auprc_mean,gap_auprc_std
+LSTM,sex,0.8219,0.0023,0.446,0.0061,0.0074,0.0014,0.0151,0.0224
+LSTM,age,0.8219,0.0023,0.446,0.0061,0.0714,0.0131,0.1129,0.0347
+LSTM,race,0.8219,0.0023,0.446,0.0061,0.1847,0.0139,0.2508,0.0102
+TGTTemporal,sex,0.8195,0.0041,0.4337,0.0056,0.0066,0.0038,0.0244,0.0135
+TGTTemporal,age,0.8195,0.0041,0.4337,0.0056,0.0799,0.0033,0.1019,0.0367
+TGTTemporal,race,0.8195,0.0041,0.4337,0.0056,0.1982,0.0185,0.2263,0.0509
+TGTClinical,sex,0.8249,0.0012,0.4428,0.0021,0.0113,0.002,0.0099,0.0061
+TGTClinical,age,0.8249,0.0012,0.4428,0.0021,0.0682,0.0138,0.1065,0.0437
+TGTClinical,race,0.8249,0.0012,0.4428,0.0021,0.192,0.0135,0.2289,0.0161
+TGTFull,sex,0.8193,0.0056,0.4345,0.0077,0.0076,0.0053,0.0149,0.0055
+TGTFull,age,0.8193,0.0056,0.4345,0.0077,0.0741,0.0052,0.1106,0.0384
+TGTFull,race,0.8193,0.0056,0.4345,0.0077,0.209,0.017,0.243,0.0264
+
+# Paired LSTM - TGTFull AUROC-gap difference (per seed, fixed split; positive => TGTFull smaller gap)
+comparison,attribute,diff_seed42,diff_seed123,diff_seed2024,mean_diff,std_diff,n_seeds_TGTFull_smaller,per_seed_sign
+LSTM_minus_TGTFull_auroc_gap,sex,-0.0008,0.0045,-0.0041,-0.0001,0.0044,1,TGTFull_larger|TGTFull_smaller|TGTFull_larger
+LSTM_minus_TGTFull_auroc_gap,age,0.0126,0.002,-0.0226,-0.0027,0.0181,2,TGTFull_smaller|TGTFull_smaller|TGTFull_larger
+LSTM_minus_TGTFull_auroc_gap,race,-0.0275,-0.0384,-0.007,-0.0243,0.016,0,TGTFull_larger|TGTFull_larger|TGTFull_larger
