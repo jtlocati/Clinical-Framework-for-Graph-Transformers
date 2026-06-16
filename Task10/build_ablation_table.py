@@ -1,3 +1,18 @@
+# === DEPRECATED EVALUATION PATH (added by repo-cleanup; do not remove) ===
+# This script re-aggregates the stale per-seed-resplit Task6 evaluation that produced the
+# contaminated race-gap numbers. Authoritative source of record:
+# Task10/results/*_test_predictions.csv via analysis/corrected_eval.py.
+# See deprecated_stale_eval/README.md and outputs/race_gap_provenance.md.
+import os as _dep_os
+if _dep_os.environ.get("ALLOW_DEPRECATED_EVAL") != "1":
+    raise RuntimeError(
+        "DEPRECATED stale evaluation path; its outputs are contaminated. "
+        "Use Task10/results/*_test_predictions.csv via analysis/corrected_eval.py. "
+        "See deprecated_stale_eval/README.md. "
+        "Set ALLOW_DEPRECATED_EVAL=1 to run anyway (forensic re-runs only)."
+    )
+# === end deprecation guard ===
+
 import pandas as pd
 import numpy as np
 import os
